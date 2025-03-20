@@ -1,11 +1,12 @@
 // lib/api-client.ts
 import { getAdminToken, getClientToken } from "@/lib/auth";
+import { BASE_URL } from "@/lib/host";
 import type { UserRole } from "@/types/base";
 import axios from "axios";
 
 const createApiInstance = (role: UserRole = "user") => {
   const instance = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+    baseURL: BASE_URL,
     headers: {
       "Content-Type": "application/json",
     },
