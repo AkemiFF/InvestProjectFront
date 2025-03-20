@@ -2,16 +2,17 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import Link from "next/link"
-import { Hexagon, Mail, Lock, User, ArrowRight, Github, Twitter, ChromeIcon as Google } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
+import { apiClient } from "@/services/api-client"
+import { ArrowRight, Github, ChromeIcon as Google, Hexagon, Lock, Mail, Twitter, User } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -36,11 +37,26 @@ export default function RegisterPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      router.push("/auth/verify-email")
-    }, 1500)
+    apiClient
+      .post("/api/auth/register/initiate/", formData)
+      .then((res) => {
+        console.log(res.data);
+
+      })
+      .catch((error) => {
+        if (error.response) {
+          if (error.response.status === 406) {
+            console.error("Nom déjà pris");
+          } else {
+            console.error("Erreur lors de l'inscription:", error.response.data);
+          }
+        } else {
+          console.error("Erreur réseau ou serveur indisponible");
+        }
+      }); setTimeout(() => {
+        setIsLoading(false)
+        router.push("/auth/verify-email")
+      }, 1500)
   }
 
   return (

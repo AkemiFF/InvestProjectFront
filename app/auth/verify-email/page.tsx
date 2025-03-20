@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { Hexagon, CheckCircle, RefreshCw, ArrowRight, Mail } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ArrowRight, CheckCircle, Hexagon, Mail, RefreshCw } from "lucide-react"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function VerifyEmailPage() {
   const router = useRouter()
@@ -18,21 +18,27 @@ export default function VerifyEmailPage() {
   const [verified, setVerified] = useState(false)
   const [countdown, setCountdown] = useState(60)
   const [canResend, setCanResend] = useState(false)
-
+  const checkVerificationStatus = () => {
+    const status = localStorage.getItem("__modsqnfoeirnfioreioomsdjfmiz");
+    if (status === "true") {
+      setIsVerifying(false);
+      setVerified(true);
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 5000);
+    } else {
+      setTimeout(checkVerificationStatus, 1000);
+    }
+  };
+  checkVerificationStatus();
   // Simulate verification if token is present
   useEffect(() => {
-    if (token) {
-      setIsVerifying(true)
 
-      // Simulate API verification
-      const timer = setTimeout(() => {
-        setIsVerifying(false)
-        setVerified(true)
-      }, 2000)
+    setIsVerifying(true)
 
-      return () => clearTimeout(timer)
-    }
-  }, [token])
+
+
+  }, [])
 
   // Countdown for resend button
   useEffect(() => {
@@ -100,7 +106,7 @@ export default function VerifyEmailPage() {
 
                 <Alert className="bg-green-900/20 border-green-700/50 text-green-300 mb-6">
                   <AlertDescription>
-                    Your email has been verified successfully. You can now access all features of the platform.
+                    Your email has been verified successfully. You will be redirected to the Login page shortly.
                   </AlertDescription>
                 </Alert>
 

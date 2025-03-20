@@ -2,17 +2,22 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import Link from "next/link"
-import { Hexagon, Mail, Lock, ArrowRight, Github, Twitter, ChromeIcon as Google } from "lucide-react"
+import { useLayoutContext } from "@/components/layout/LayoutContext"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
+import { userAuth } from "@/lib/auth"
+import { BASE_URL } from "@/lib/host"
+import { apiClient } from "@/services/api-client"
+import { ArrowRight, Github, ChromeIcon as Google, Hexagon, Lock, Mail, Twitter } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 
+// // Login
 export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -21,7 +26,7 @@ export default function LoginPage() {
     password: "",
     rememberMe: false,
   })
-
+  const { user, updateUser } = useLayoutContext()
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -35,10 +40,34 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
+    try {
+      const response = await apiClient.post(`${BASE_URL}/api/auth/login/`, formData)
+      if (response.status === 200) {
+        const res = response.data;
+        userAuth.save(res);
+        console.log(res);
+        updateUser({
+          id: res.user_id,
+          username: res.username,
+          email: res.email,
+          userType: res.role,
+          pic: res.pic,
+        })
+        console.log(user);
+
+        // router.push("/dashboard")
+      } else {
+        // Handle login error
+        console.error("Login failed:", response.statusText)
+      }
+    } catch (error) {
+      console.error("An error occurred during login:", error)
+    } finally {
+      setIsLoading(false)
+    }
     setTimeout(() => {
       setIsLoading(false)
-      router.push("/dashboard")
+      // router.push("/dashboard")
     }, 1500)
   }
 
