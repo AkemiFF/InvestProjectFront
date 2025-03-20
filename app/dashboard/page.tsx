@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Activity, Briefcase, DollarSign, MessageSquare, PieChart, Plus, TrendingUp, Wallet } from "lucide-react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,7 +20,10 @@ export default function InvestorDashboard() {
   const [availableBalance, setAvailableBalance] = useState(7500000)
   const [activeProjects, setActiveProjects] = useState(15)
   const [unreadMessages, setUnreadMessages] = useState(4)
-
+useEffect(() => {
+  
+ 
+}, []);
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("fr-MG", {
