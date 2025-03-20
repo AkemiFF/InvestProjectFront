@@ -2,6 +2,7 @@
 type AuthType = "user" | "admin";
 
 import type { AuthData } from "@/types/base";
+import { BASE_URL } from "./host";
 
 const authManager = (type: AuthType = "user") => {
     const storageKey = type === "admin" ? "admin_auth" : "auth";
@@ -18,6 +19,7 @@ const authManager = (type: AuthType = "user") => {
                 role: responseData.role,
                 access_expires_at: Date.now() + responseData.token_lifetime.access * 1000
             };
+
             localStorage.setItem(storageKey, JSON.stringify(authData));
         },
 
@@ -67,7 +69,7 @@ const authManager = (type: AuthType = "user") => {
             if (!refreshToken) {
                 throw new Error("Aucun token de rafraîchissement disponible");
             }
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/token/refresh/`, {
+            const response = await fetch(`${BASE_URL}/auth/token/refresh/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ refresh: refreshToken }),
