@@ -1,3 +1,4 @@
+import { ClientProvider } from '@/components/ClientProvider'
 import { ThemeProvider } from '@/components/theme-provider'
 import type { Metadata } from 'next'
 import './globals.css'
@@ -22,7 +23,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <ClientProvider>
+            {children}
+          </ClientProvider>
         </ThemeProvider>
       </body>
     </html>
