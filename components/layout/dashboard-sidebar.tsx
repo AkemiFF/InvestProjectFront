@@ -1,38 +1,65 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
-import { Briefcase, Command, FileText, Heart, MessageSquare, Settings, Shield, Users, Wallet, Zap } from "lucide-react"
+import { StatusItem } from "@/components/dashboard/status-item"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { StatusItem } from "@/components/dashboard/status-item"
+import { Briefcase, Command, FileText, Heart, MessageSquare, Settings, Shield, Users, Wallet, Zap } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import type React from "react"
+import { useState } from "react"
+
+// Configuration des liens
+const routeConfig = {
+  common: {
+    Dashboard: "/dashboard",
+    Projects: "/projects",
+    Finances: "/payments",
+    Settings: "/profile"
+  },
+  admin: {
+    "User Management": "/users",
+    Moderation: "/moderation",
+    Support: "/centre-aide"
+  },
+  user: {
+    Network: "/contacts",
+    Messages: "/messages",
+    Favorites: "/favorites",
+    Contracts: "/subscriptions"
+  }
+}
 
 interface NavItemProps {
   icon: React.ElementType
   label: string
   active?: boolean
+  href: string
 }
 
-function NavItem({ icon: Icon, label, active }: NavItemProps) {
+function NavItem({ icon: Icon, label, href }: NavItemProps) {
+  const pathname = usePathname()
+  const isActive = pathname === href
+
   return (
-    <Button
-      variant="ghost"
-      className={`w-full justify-start ${active ? "bg-slate-800/70 text-cyan-400" : "text-slate-400 hover:text-slate-100"}`}
-    >
-      <Icon className="mr-2 h-4 w-4" />
-      {label}
-    </Button>
+    <Link href={href} passHref>
+      <Button
+        variant="ghost"
+        className={`w-full justify-start ${isActive ? "bg-slate-800/70 text-cyan-400" : "text-slate-400 hover:text-slate-100"}`}
+      >
+        <Icon className="mr-2 h-4 w-4" />
+        {label}
+      </Button>
+    </Link>
   )
 }
-
 interface DashboardSidebarProps {
   userType: "investor" | "project-owner" | "admin"
 }
 
 export function DashboardSidebar({ userType: initialUserType }: DashboardSidebarProps) {
-  const [userType, setUserType] = useState<"investor" | "project-owner" | "admin">(initialUserType)
+  const [userType, setUserType] = useState(initialUserType)
 
   return (
     <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm h-full">
@@ -41,7 +68,7 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
           <div className="mb-6">
             <Select
               defaultValue={userType}
-              onValueChange={(value) => setUserType(value as "investor" | "project-owner" | "admin")}
+              onValueChange={(value) => setUserType(value as typeof userType)}
             >
               <SelectTrigger className="w-full bg-slate-800/50 border-slate-700/50">
                 <SelectValue placeholder="Select account type" />
@@ -55,26 +82,30 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
         )}
 
         <nav className="space-y-2">
-          <NavItem icon={Command} label="Dashboard" active />
+          <NavItem
+            icon={Command}
+            label="Dashboard"
+            href={routeConfig.common.Dashboard}
+          />
 
           {userType === "admin" ? (
             <>
-              <NavItem icon={Users} label="User Management" />
-              <NavItem icon={Briefcase} label="Projects" />
-              <NavItem icon={Shield} label="Moderation" />
-              <NavItem icon={Wallet} label="Finances" />
-              <NavItem icon={MessageSquare} label="Support" />
-              <NavItem icon={Settings} label="Settings" />
+              <NavItem icon={Users} label="User Management" href={routeConfig.admin["User Management"]} />
+              <NavItem icon={Briefcase} label="Projects" href={routeConfig.common.Projects} />
+              <NavItem icon={Shield} label="Moderation" href={routeConfig.admin.Moderation} />
+              <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} />
+              <NavItem icon={MessageSquare} label="Support" href={routeConfig.admin.Support} />
+              <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />
             </>
           ) : (
             <>
-              <NavItem icon={Briefcase} label="Projects" />
-              <NavItem icon={Users} label="Network" />
-              <NavItem icon={MessageSquare} label="Messages" />
-              <NavItem icon={Wallet} label="Finances" />
-              <NavItem icon={Heart} label="Favorites" />
-              <NavItem icon={FileText} label="Contracts" />
-              <NavItem icon={Settings} label="Settings" />
+              <NavItem icon={Briefcase} label="Projects" href={routeConfig.common.Projects} />
+              <NavItem icon={Users} label="Network" href={routeConfig.user.Network} />
+              <NavItem icon={MessageSquare} label="Messages" href={routeConfig.user.Messages} />
+              <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} />
+              <NavItem icon={Heart} label="Favorites" href={routeConfig.user.Favorites} />
+              <NavItem icon={FileText} label="Contracts" href={routeConfig.user.Contracts} />
+              <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />
             </>
           )}
         </nav>
@@ -109,4 +140,3 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
     </Card>
   )
 }
-
