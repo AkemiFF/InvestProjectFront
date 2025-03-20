@@ -3,13 +3,13 @@
 import { StatusItem } from "@/components/dashboard/status-item"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Briefcase, Command, FileText, Heart, MessageSquare, Settings, Shield, Users, Wallet, Zap } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type React from "react"
-import { useState } from "react"
-
+import { useEffect, useState } from "react"
+import { useLayoutContext } from "./LayoutContext"
+const adminName = "admin"
 // Configuration des liens
 const routeConfig = {
   common: {
@@ -19,9 +19,9 @@ const routeConfig = {
     Settings: "/profile"
   },
   admin: {
-    "User Management": "/users",
-    Moderation: "/moderation",
-    Support: "/centre-aide"
+    "User Management": `/${adminName}/users`,
+    Moderation: `/${adminName}/moderation`,
+    Support: `/${adminName}/centre-aide`
   },
   user: {
     Network: "/contacts",
@@ -59,12 +59,17 @@ interface DashboardSidebarProps {
 }
 
 export function DashboardSidebar({ userType: initialUserType }: DashboardSidebarProps) {
-  const [userType, setUserType] = useState(initialUserType)
+  const [userType, setUserTp] = useState("")
+  const { user, setUserType, updateUser } = useLayoutContext();
+
+  useEffect(() => {
+    setUserTp(user.userType)
+  }, []);
 
   return (
     <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm h-full">
       <CardContent className="p-4">
-        {userType !== "admin" && (
+        {/* {userType !== "admin" && (
           <div className="mb-6">
             <Select
               defaultValue={userType}
@@ -79,7 +84,7 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
               </SelectContent>
             </Select>
           </div>
-        )}
+        )} */}
 
         <nav className="space-y-2">
           <NavItem
