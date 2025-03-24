@@ -55,7 +55,7 @@ export default function LoginPage() {
         })
         console.log(user);
 
-        // router.push("/dashboard")
+        router.push("/dashboard")
       } else {
         // Handle login error
         console.error("Login failed:", response.statusText)
