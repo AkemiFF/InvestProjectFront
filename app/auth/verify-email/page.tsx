@@ -18,25 +18,25 @@ export default function VerifyEmailPage() {
   const [verified, setVerified] = useState(false)
   const [countdown, setCountdown] = useState(60)
   const [canResend, setCanResend] = useState(false)
-  const checkVerificationStatus = () => {
-    const status = localStorage.getItem("__modsqnfoeirnfioreioomsdjfmiz");
-    if (status === "true") {
-      setIsVerifying(false);
-      setVerified(true);
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 5000);
-    } else {
-      setTimeout(checkVerificationStatus, 1000);
-    }
-  };
-  checkVerificationStatus();
+
   // Simulate verification if token is present
   useEffect(() => {
 
     setIsVerifying(true)
 
-
+    const checkVerificationStatus = () => {
+      const status = localStorage.getItem("__modsqnfoeirnfioreioomsdjfmiz");
+      if (status === "true") {
+        setIsVerifying(false);
+        setVerified(true);
+        setTimeout(() => {
+          router.push("/auth/login");
+        }, 5000);
+      } else {
+        setTimeout(checkVerificationStatus, 1000);
+      }
+    };
+    checkVerificationStatus();
 
   }, [])
 
