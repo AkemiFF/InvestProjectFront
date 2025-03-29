@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProjectCard } from "@/components/dashboard/project-card"
-import { Briefcase, Filter, Search, SlidersHorizontal, Star, X } from "lucide-react"
+import { Briefcase, Filter, Search, SlidersHorizontal, Star, X, Loader } from "lucide-react"
+import { projectsService } from "@/services/projects-service"
+import type { Project } from "@/types/projects"
 
 export default function ProjectListingPage() {
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
@@ -19,144 +21,252 @@ export default function ProjectListingPage() {
   const [selectedSort, setSelectedSort] = useState("trending")
   const [fundingRange, setFundingRange] = useState([0, 50000000])
   const [showFilters, setShowFilters] = useState(false)
-  const [activeProjects, setActiveProjects] = useState(15)
+  const [sectors, setSectors] = useState<Array<{ id: string | number; name: string }>>([])
 
-  // Sample project data
-  const projects = [
-    {
-      id: 1,
-      title: "Sustainable Aquaculture Farm",
-      sector: "Agriculture",
-      progress: 42,
-      target: 15000000,
-      raised: 6300000,
-      investors: 18,
-      daysLeft: 12,
-      featured: false,
-    },
-    {
-      id: 2,
-      title: "AI-Powered Healthcare Assistant",
-      sector: "Technology",
-      progress: 78,
-      target: 8000000,
-      raised: 6240000,
-      investors: 35,
-      daysLeft: 5,
-      featured: true,
-    },
-    {
-      id: 3,
-      title: "Solar Panel Manufacturing",
-      sector: "Green Energy",
-      progress: 25,
-      target: 25000000,
-      raised: 6250000,
-      investors: 12,
-      daysLeft: 21,
-      featured: false,
-    },
-    {
-      id: 4,
-      title: "Urban Farming Initiative",
-      sector: "Agriculture",
-      progress: 65,
-      target: 12000000,
-      raised: 7800000,
-      investors: 27,
-      daysLeft: 8,
-      featured: false,
-    },
-    {
-      id: 5,
-      title: "Renewable Energy Plant",
-      sector: "Green Energy",
-      progress: 28,
-      target: 35000000,
-      raised: 9800000,
-      investors: 15,
-      daysLeft: 25,
-      featured: false,
-    },
-    {
-      id: 6,
-      title: "Educational Platform",
-      sector: "Education",
-      progress: 92,
-      target: 3200000,
-      raised: 2944000,
-      investors: 42,
-      daysLeft: 3,
-      featured: false,
-    },
-    {
-      id: 7,
-      title: "Medical Supplies Chain",
-      sector: "Healthcare",
-      progress: 55,
-      target: 18000000,
-      raised: 9900000,
-      investors: 22,
-      daysLeft: 15,
-      featured: false,
-    },
-    {
-      id: 8,
-      title: "Eco-Friendly Packaging",
-      sector: "Manufacturing",
-      progress: 38,
-      target: 7500000,
-      raised: 2850000,
-      investors: 14,
-      daysLeft: 18,
-      featured: false,
-    },
-    {
-      id: 9,
-      title: "Mobile Banking Solution",
-      sector: "Finance",
-      progress: 72,
-      target: 15000000,
-      raised: 10800000,
-      investors: 31,
-      daysLeft: 7,
-      featured: true,
-    },
+  // API integration states
+  const [projects, setProjects] = useState<Project[]>([])
+  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([])
+  const [endingSoonProjects, setEndingSoonProjects] = useState<Project[]>([])
+  const [newProjects, setNewProjects] = useState<Project[]>([])
+  const [favoriteProjects, setFavoriteProjects] = useState<Project[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingFeatured, setIsLoadingFeatured] = useState(false)
+  const [isLoadingEndingSoon, setIsLoadingEndingSoon] = useState(false)
+  const [isLoadingNew, setIsLoadingNew] = useState(false)
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [activeTab, setActiveTab] = useState("all")
+
+  // Ajouter un tableau de secteurs par défaut
+  const defaultSectors = [
+    { id: "technology", name: "Technology" },
+    { id: "green energy", name: "Green Energy" },
+    { id: "healthcare", name: "Healthcare" },
+    { id: "agriculture", name: "Agriculture" },
+    { id: "education", name: "Education" },
+    { id: "finance", name: "Finance" },
+    { id: "manufacturing", name: "Manufacturing" },
   ]
 
-  // Filter projects based on search query and filters
-  const filteredProjects = projects.filter((project) => {
-    // Filter by search query
-    if (searchQuery && !project.title.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false
+  // Fonction utilitaire pour s'assurer qu'on a toujours un tableau
+  const ensureArray = (data: any): any[] => {
+    if (!data) return []
+    if (Array.isArray(data)) return data
+    if (data.results && Array.isArray(data.results)) return data.results
+    if (typeof data === "object") return [data] // Si c'est un objet unique, le mettre dans un tableau
+    return []
+  }
+
+  // Fonction pour générer une clé unique si l'ID n'existe pas
+  const generateKey = (item: any, index: number): string => {
+    if (item.id) return item.id.toString()
+    if (item._id) return item._id.toString()
+    if (item.title) return `${item.title}-${index}`
+    return `item-${index}`
+  }
+
+  // Fetch all projects and sectors on component mount
+  useEffect(() => {
+    fetchProjects()
+    fetchSectors()
+    fetchFeaturedProjects()
+  }, [])
+
+  // Fetch projects based on active tab
+  useEffect(() => {
+    switch (activeTab) {
+      case "featured":
+        fetchFeaturedProjects()
+        break
+      case "ending-soon":
+        fetchEndingSoonProjects()
+        break
+      case "new":
+        fetchNewProjects()
+        break
+      case "favorites":
+        fetchFavoriteProjects()
+        break
+      default:
+        // "all" tab is handled by the initial fetch
+        break
+    }
+  }, [activeTab])
+
+  // Modifier la fonction fetchSectors pour utiliser les secteurs par défaut en cas d'erreur
+  const fetchSectors = async () => {
+    try {
+      const response = await projectsService.getAllSectors()
+      const sectorData = response.data.results || response.data
+      setSectors(Array.isArray(sectorData) ? sectorData : defaultSectors)
+    } catch (err) {
+      console.error("Error fetching sectors:", err)
+      // Utiliser les secteurs par défaut en cas d'erreur
+      setSectors(defaultSectors)
+    }
+  }
+
+  // Fetch projects from API
+  const fetchProjects = async (page = 1, params = {}) => {
+    try {
+      setIsLoading(true)
+      const response = await projectsService.getAllProjects({
+        page,
+        limit: 9,
+        min_amount: fundingRange[0],
+        max_amount: fundingRange[1],
+        ...params,
+      })
+
+      const projectsData = ensureArray(response.data)
+
+      if (page === 1) {
+        setProjects(projectsData)
+      } else {
+        setProjects((prev) => [...prev, ...projectsData])
+      }
+
+      // Check if there are more pages
+      if (response.data && response.data.next) {
+        setHasMore(true)
+      } else {
+        setHasMore(false)
+      }
+
+      setCurrentPage(page)
+      setError(null)
+    } catch (err) {
+      console.error("Error fetching projects:", err)
+      setError("Failed to load projects. Please try again later.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Fetch featured projects
+  const fetchFeaturedProjects = async () => {
+    try {
+      setIsLoadingFeatured(true)
+      const response = await projectsService.getFeaturedProjects()
+      console.log("Featured projects response:", response.data)
+      setFeaturedProjects(ensureArray(response.data))
+    } catch (err) {
+      console.error("Error fetching featured projects:", err)
+    } finally {
+      setIsLoadingFeatured(false)
+    }
+  }
+
+  // Fetch ending soon projects
+  const fetchEndingSoonProjects = async () => {
+    try {
+      setIsLoadingEndingSoon(true)
+      const response = await projectsService.getEndingSoonProjects()
+      setEndingSoonProjects(ensureArray(response.data))
+    } catch (err) {
+      console.error("Error fetching ending soon projects:", err)
+    } finally {
+      setIsLoadingEndingSoon(false)
+    }
+  }
+
+  // Fetch new projects
+  const fetchNewProjects = async () => {
+    try {
+      setIsLoadingNew(true)
+      const response = await projectsService.getNewProjects()
+      setNewProjects(ensureArray(response.data))
+    } catch (err) {
+      console.error("Error fetching new projects:", err)
+    } finally {
+      setIsLoadingNew(false)
+    }
+  }
+
+  // Fetch favorite projects
+  const fetchFavoriteProjects = async () => {
+    try {
+      setIsLoadingFavorites(true)
+      const response = await projectsService.getFavoriteProjects()
+      setFavoriteProjects(ensureArray(response.data))
+    } catch (err) {
+      console.error("Error fetching favorite projects:", err)
+    } finally {
+      setIsLoadingFavorites(false)
+    }
+  }
+
+  // Load more projects
+  const loadMoreProjects = () => {
+    if (!isLoading && hasMore) {
+      fetchProjects(currentPage + 1)
+    }
+  }
+
+  // Search projects
+  const handleSearch = async () => {
+    if (searchQuery.trim() === "") {
+      fetchProjects()
+      return
     }
 
-    // Filter by sector
-    if (selectedSector !== "all" && project.sector.toLowerCase() !== selectedSector) {
-      return false
+    try {
+      setIsLoading(true)
+      const response = await projectsService.searchProjects(searchQuery)
+      setProjects(ensureArray(response.data))
+      setError(null)
+    } catch (err) {
+      console.error("Error searching projects:", err)
+      setError("Failed to search projects. Please try again later.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Filter projects by category
+  const handleCategoryFilter = async (sectorId: string) => {
+    if (sectorId === "all") {
+      fetchProjects()
+      return
     }
 
-    // Filter by funding range
-    if (project.target < fundingRange[0] || project.target > fundingRange[1]) {
-      return false
+    try {
+      setIsLoading(true)
+      const response = await projectsService.getProjectsByCategory(sectorId)
+      setProjects(ensureArray(response.data))
+      setError(null)
+    } catch (err) {
+      console.error("Error filtering projects by category:", err)
+      setError("Failed to filter projects. Please try again later.")
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    return true
-  })
+  // Reset filters
+  const resetFilters = () => {
+    setSearchQuery("")
+    setSelectedSector("all")
+    setSelectedSort("trending")
+    setFundingRange([0, 50000000])
+    fetchProjects()
+  }
 
-  // Sort projects
-  const sortedProjects = [...filteredProjects].sort((a, b) => {
+  // Client-side sorting
+  const sortedProjects = [...projects].sort((a, b) => {
     switch (selectedSort) {
       case "trending":
-        return b.investors - a.investors
+        return (b.participants_count || 0) - (a.participants_count || 0)
       case "newest":
-        return a.daysLeft - b.daysLeft
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       case "ending-soon":
-        return a.daysLeft - b.daysLeft
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
       case "most-funded":
-        return b.raised - a.raised
+        return Number.parseFloat(b.amount_raised) - Number.parseFloat(a.amount_raised)
       case "highest-target":
-        return b.target - a.target
+        return Number.parseFloat(b.amount_needed) - Number.parseFloat(a.amount_needed)
       default:
         return 0
     }
@@ -169,6 +279,20 @@ export default function ProjectListingPage() {
       currency: "MGA",
       maximumFractionDigits: 0,
     }).format(amount)
+  }
+
+  // Calculate days left
+  const getDaysLeft = (endDate: string) => {
+    const end = new Date(endDate)
+    const now = new Date()
+    const diffTime = end.getTime() - now.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays > 0 ? diffDays : 0
+  }
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
   }
 
   return (
@@ -188,6 +312,11 @@ export default function ProjectListingPage() {
                 className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearch()
+                  }
+                }}
               />
             </div>
             <Button
@@ -223,19 +352,23 @@ export default function ProjectListingPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm text-slate-400">Sector</label>
-                  <Select value={selectedSector} onValueChange={setSelectedSector}>
+                  <Select
+                    value={selectedSector}
+                    onValueChange={(value) => {
+                      setSelectedSector(value)
+                      handleCategoryFilter(value)
+                    }}
+                  >
                     <SelectTrigger className="bg-slate-800/50 border-slate-700 text-slate-100">
                       <SelectValue placeholder="All Sectors" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Sectors</SelectItem>
-                      <SelectItem value="technology">Technology</SelectItem>
-                      <SelectItem value="green energy">Green Energy</SelectItem>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="agriculture">Agriculture</SelectItem>
-                      <SelectItem value="education">Education</SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
-                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                      {sectors.map((sector, index) => (
+                        <SelectItem key={generateKey(sector, index)} value={sector.id.toString()}>
+                          {sector.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -282,12 +415,7 @@ export default function ProjectListingPage() {
                   variant="outline"
                   size="sm"
                   className="h-8 border-slate-700 text-slate-300 hover:bg-slate-800"
-                  onClick={() => {
-                    setSearchQuery("")
-                    setSelectedSector("all")
-                    setSelectedSort("trending")
-                    setFundingRange([0, 50000000])
-                  }}
+                  onClick={resetFilters}
                 >
                   Reset Filters
                 </Button>
@@ -296,7 +424,21 @@ export default function ProjectListingPage() {
           </Card>
         )}
 
-        <Tabs defaultValue="all" className="w-full">
+        {error && (
+          <div className="bg-red-900/20 border border-red-700 text-red-200 rounded-md p-4 mb-4">
+            <p>{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 border-red-700 text-red-200 hover:bg-red-900/30"
+              onClick={resetFilters}
+            >
+              Try Again
+            </Button>
+          </div>
+        )}
+
+        <Tabs defaultValue="all" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="bg-slate-800/50 p-1 mb-6">
             <TabsTrigger value="all" className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400">
               All Projects
@@ -325,162 +467,223 @@ export default function ProjectListingPage() {
           </TabsList>
 
           <TabsContent value="all" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedProjects.map((project) => (
-                <Link href={`/projects/${project.id}`} key={project.id}>
-                  <ProjectCard
-                    title={project.title}
-                    sector={project.sector}
-                    progress={project.progress}
-                    target={project.target}
-                    raised={project.raised}
-                    investors={project.investors}
-                    daysLeft={project.daysLeft}
-                    featured={project.featured}
-                  />
-                </Link>
-              ))}
-            </div>
-
-            {sortedProjects.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Briefcase className="h-12 w-12 text-slate-600 mb-4" />
-                <h3 className="text-lg font-medium text-slate-300 mb-2">No projects found</h3>
-                <p className="text-sm text-slate-500 max-w-md mb-6">
-                  We couldn't find any projects matching your search criteria. Try adjusting your filters or search
-                  query.
-                </p>
-                <Button
-                  variant="outline"
-                  className="border-slate-700 text-slate-300 hover:bg-slate-800"
-                  onClick={() => {
-                    setSearchQuery("")
-                    setSelectedSector("all")
-                    setSelectedSort("trending")
-                    setFundingRange([0, 50000000])
-                  }}
-                >
-                  Reset Filters
-                </Button>
+            {isLoading && projects.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader className="h-8 w-8 text-cyan-500 animate-spin mb-4" />
+                <p className="text-slate-400">Loading projects...</p>
               </div>
-            )}
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {sortedProjects.map((project, index) => (
+                    <Link href={`/projects/${project.id}`} key={generateKey(project, index)}>
+                      <ProjectCard
+                        title={project.title}
+                        sector={project.sector?.name || ""}
+                        progress={project.progress || 0}
+                        target={Number.parseFloat(project.amount_needed) || 0}
+                        raised={Number.parseFloat(project.amount_raised) || 0}
+                        investors={project.participants_count || 0}
+                        daysLeft={project.days_left || 0}
+                        featured={project.is_featured || false}
+                      />
+                    </Link>
+                  ))}
+                </div>
 
-            {sortedProjects.length > 0 && (
-              <div className="flex justify-center mt-8">
-                <Button variant="outline" className="border-slate-700 text-slate-400 hover:text-slate-100">
-                  Load More Projects
-                </Button>
-              </div>
+                {sortedProjects.length === 0 && !isLoading && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Briefcase className="h-12 w-12 text-slate-600 mb-4" />
+                    <h3 className="text-lg font-medium text-slate-300 mb-2">No projects found</h3>
+                    <p className="text-sm text-slate-500 max-w-md mb-6">
+                      We couldn't find any projects matching your search criteria. Try adjusting your filters or search
+                      query.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                      onClick={resetFilters}
+                    >
+                      Reset Filters
+                    </Button>
+                  </div>
+                )}
+
+                {sortedProjects.length > 0 && hasMore && (
+                  <div className="flex justify-center mt-8">
+                    <Button
+                      variant="outline"
+                      className="border-slate-700 text-slate-400 hover:text-slate-100"
+                      onClick={loadMoreProjects}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader className="h-4 w-4 mr-2 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        "Load More Projects"
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
           <TabsContent value="featured" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedProjects
-                .filter((p) => p.featured)
-                .map((project) => (
-                  <Link href={`/projects/${project.id}`} key={project.id}>
-                    <ProjectCard
-                      title={project.title}
-                      sector={project.sector}
-                      progress={project.progress}
-                      target={project.target}
-                      raised={project.raised}
-                      investors={project.investors}
-                      daysLeft={project.daysLeft}
-                      featured={project.featured}
-                    />
-                  </Link>
-                ))}
-            </div>
-
-            {sortedProjects.filter((p) => p.featured).length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Star className="h-12 w-12 text-slate-600 mb-4" />
-                <h3 className="text-lg font-medium text-slate-300 mb-2">No featured projects found</h3>
-                <p className="text-sm text-slate-500 max-w-md mb-6">
-                  We couldn't find any featured projects matching your search criteria.
-                </p>
+            {isLoadingFeatured ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader className="h-8 w-8 text-cyan-500 animate-spin mb-4" />
+                <p className="text-slate-400">Loading featured projects...</p>
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {featuredProjects.map((project, index) => (
+                    <Link href={`/projects/${project.id}`} key={generateKey(project, index)}>
+                      <ProjectCard
+                        title={project.title}
+                        sector={project.sector?.name || ""}
+                        progress={project.progress || 0}
+                        target={Number.parseFloat(project.amount_needed) || 0}
+                        raised={Number.parseFloat(project.amount_raised) || 0}
+                        investors={project.participants_count || 0}
+                        daysLeft={project.days_left || 0}
+                        featured={project.is_featured || false}
+                      />
+                    </Link>
+                  ))}
+                </div>
+
+                {featuredProjects.length === 0 && !isLoadingFeatured && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Star className="h-12 w-12 text-slate-600 mb-4" />
+                    <h3 className="text-lg font-medium text-slate-300 mb-2">No featured projects found</h3>
+                    <p className="text-sm text-slate-500 max-w-md mb-6">
+                      We couldn't find any featured projects matching your search criteria.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
           <TabsContent value="ending-soon" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedProjects
-                .filter((p) => p.daysLeft <= 7)
-                .map((project) => (
-                  <Link href={`/projects/${project.id}`} key={project.id}>
-                    <ProjectCard
-                      title={project.title}
-                      sector={project.sector}
-                      progress={project.progress}
-                      target={project.target}
-                      raised={project.raised}
-                      investors={project.investors}
-                      daysLeft={project.daysLeft}
-                      featured={project.featured}
-                    />
-                  </Link>
-                ))}
-            </div>
-
-            {sortedProjects.filter((p) => p.daysLeft <= 7).length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <h3 className="text-lg font-medium text-slate-300 mb-2">No projects ending soon</h3>
-                <p className="text-sm text-slate-500 max-w-md">
-                  There are no projects ending soon that match your search criteria.
-                </p>
+            {isLoadingEndingSoon ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader className="h-8 w-8 text-cyan-500 animate-spin mb-4" />
+                <p className="text-slate-400">Loading projects ending soon...</p>
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {endingSoonProjects.map((project, index) => (
+                    <Link href={`/projects/${project.id}`} key={generateKey(project, index)}>
+                      <ProjectCard
+                        title={project.title}
+                        sector={project.sector?.name || ""}
+                        progress={project.progress || 0}
+                        target={Number.parseFloat(project.amount_needed) || 0}
+                        raised={Number.parseFloat(project.amount_raised) || 0}
+                        investors={project.participants_count || 0}
+                        daysLeft={project.days_left || 0}
+                        featured={project.is_featured || false}
+                      />
+                    </Link>
+                  ))}
+                </div>
+
+                {endingSoonProjects.length === 0 && !isLoadingEndingSoon && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <h3 className="text-lg font-medium text-slate-300 mb-2">No projects ending soon</h3>
+                    <p className="text-sm text-slate-500 max-w-md">
+                      There are no projects ending soon that match your search criteria.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
           <TabsContent value="new" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedProjects
-                .filter((p) => p.daysLeft >= 20)
-                .map((project) => (
-                  <Link href={`/projects/${project.id}`} key={project.id}>
-                    <ProjectCard
-                      title={project.title}
-                      sector={project.sector}
-                      progress={project.progress}
-                      target={project.target}
-                      raised={project.raised}
-                      investors={project.investors}
-                      daysLeft={project.daysLeft}
-                      featured={project.featured}
-                    />
-                  </Link>
-                ))}
-            </div>
-
-            {sortedProjects.filter((p) => p.daysLeft >= 20).length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <h3 className="text-lg font-medium text-slate-300 mb-2">No new projects found</h3>
-                <p className="text-sm text-slate-500 max-w-md">
-                  There are no new projects that match your search criteria.
-                </p>
+            {isLoadingNew ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader className="h-8 w-8 text-cyan-500 animate-spin mb-4" />
+                <p className="text-slate-400">Loading new projects...</p>
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {newProjects.map((project, index) => (
+                    <Link href={`/projects/${project.id}`} key={generateKey(project, index)}>
+                      <ProjectCard
+                        title={project.title}
+                        sector={project.sector?.name || ""}
+                        progress={project.progress || 0}
+                        target={Number.parseFloat(project.amount_needed) || 0}
+                        raised={Number.parseFloat(project.amount_raised) || 0}
+                        investors={project.participants_count || 0}
+                        daysLeft={project.days_left || 0}
+                        featured={project.is_featured || false}
+                      />
+                    </Link>
+                  ))}
+                </div>
+
+                {newProjects.length === 0 && !isLoadingNew && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <h3 className="text-lg font-medium text-slate-300 mb-2">No new projects found</h3>
+                    <p className="text-sm text-slate-500 max-w-md">
+                      There are no new projects that match your search criteria.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
           <TabsContent value="favorites" className="mt-0">
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Star className="h-12 w-12 text-slate-600 mb-4" />
-              <h3 className="text-lg font-medium text-slate-300 mb-2">No favorite projects yet</h3>
-              <p className="text-sm text-slate-500 max-w-md mb-6">
-                You haven't added any projects to your favorites yet. Browse projects and click the star icon to add
-                them to your favorites.
-              </p>
-              <Button
-                variant="outline"
-                className="border-slate-700 text-slate-300 hover:bg-slate-800"
-                onClick={() => document.querySelector('[data-value="all"]')?.click()}
-              >
-                Browse Projects
-              </Button>
-            </div>
+            {isLoadingFavorites ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader className="h-8 w-8 text-cyan-500 animate-spin mb-4" />
+                <p className="text-slate-400">Loading favorite projects...</p>
+              </div>
+            ) : favoriteProjects.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {favoriteProjects.map((project, index) => (
+                  <Link href={`/projects/${project.id}`} key={generateKey(project, index)}>
+                    <ProjectCard
+                      title={project.title}
+                      sector={project.sector?.name || ""}
+                      progress={project.progress || 0}
+                      target={Number.parseFloat(project.amount_needed) || 0}
+                      raised={Number.parseFloat(project.amount_raised) || 0}
+                      investors={project.participants_count || 0}
+                      daysLeft={project.days_left || 0}
+                      featured={project.is_featured || false}
+                    />
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Star className="h-12 w-12 text-slate-600 mb-4" />
+                <h3 className="text-lg font-medium text-slate-300 mb-2">No favorite projects yet</h3>
+                <p className="text-sm text-slate-500 max-w-md mb-6">
+                  You haven't added any projects to your favorites yet. Browse projects and click the star icon to add
+                  them to your favorites.
+                </p>
+                <Button
+                  variant="outline"
+                  className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                  onClick={() => document.querySelector('[data-value="all"]')?.click()}
+                >
+                  Browse Projects
+                </Button>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
