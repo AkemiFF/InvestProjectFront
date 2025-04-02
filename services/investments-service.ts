@@ -1,12 +1,12 @@
 // services/investments-service.ts
-import { apiClient } from './api-client';
+import { apiClient } from '../lib/api-client';
 import type { 
   InvestmentCreateData, 
   DepositData, 
   WithdrawData 
 } from '@/types/investments';
 
-const investmentsService = {
+export const investmentsService = {
   // Récupération des investissements
   getUserInvestments: () => {
     return apiClient.get('/api/investments/');

@@ -1,5 +1,5 @@
 // services/comments-service.ts
-import { apiClient } from './api-client';
+import { apiClient } from '../lib/api-client';
 import type { CommentCreateData, CommentReportData } from '@/types/comments';
 
 const commentsService = {

@@ -1,5 +1,5 @@
 // services/payments-service.ts
-import { apiClient } from './api-client';
+import { apiClient } from '../lib/api-client';
 import type { 
   PaymentMethodData, 
   PaymentProcessData 

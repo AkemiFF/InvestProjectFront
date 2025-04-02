@@ -5,7 +5,7 @@ import type { ProjectCreateData, ProjectUpdateData } from "@/types/projects"
 export const projectsService = {
   // Récupération des projets
   getAllProjects: (params?: any) => {
-    return apiClient.get("/api/projects/projects/", { params })
+    return apiClient.get("/api/projects/", { params })
   },
 
   getProjectById: (id: number | string) => {
