@@ -1,20 +1,22 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
+import { ProjectCard } from "@/components/dashboard/project-card"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useLayoutContext } from "@/components/layout/LayoutContext"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ProjectCard } from "@/components/dashboard/project-card"
-import { Briefcase, Filter, Search, SlidersHorizontal, Star, X, Loader } from "lucide-react"
 import { projectsService } from "@/services/projects-service"
 import type { Project } from "@/types/projects"
+import { Briefcase, Filter, Loader, Search, SlidersHorizontal, Star, X } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 
 export default function ProjectListingPage() {
+  const { user } = useLayoutContext();
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSector, setSelectedSector] = useState("all")
@@ -49,6 +51,15 @@ export default function ProjectListingPage() {
     { id: "finance", name: "Finance" },
     { id: "manufacturing", name: "Manufacturing" },
   ]
+  const setCurrentUser = () => {
+    setIsLoading(true)
+    setUserType(user.userType)
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    setCurrentUser();
+  }, []);
 
   // Fonction utilitaire pour s'assurer qu'on a toujours un tableau
   const ensureArray = (data: any): any[] => {
@@ -112,6 +123,7 @@ export default function ProjectListingPage() {
   const fetchProjects = async (page = 1, params = {}) => {
     try {
       setIsLoading(true)
+      setUserType(user.userType)
       const response = await projectsService.getAllProjects({
         page,
         limit: 9,
