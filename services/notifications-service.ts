@@ -1,8 +1,8 @@
 // services/notifications-service.ts
-import { apiClient } from './api-client';
+import { apiClient } from '../lib/api-client';
 import type { NotificationPreferences } from '@/types/notifications';
 
-const notificationsService = {
+export const notificationsService = {
   // Récupération des notifications
   getAllNotifications: () => {
     return apiClient.get('/api/notifications/');

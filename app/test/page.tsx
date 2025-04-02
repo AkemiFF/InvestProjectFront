@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { useLayoutContext } from "@/components/layout/LayoutContext";
-import { apiClient } from "@/services/api-client";
+import { apiClient } from "@/lib/api-client";
 import { ApiError } from "@/types/base";
 import { useEffect } from "react";
 

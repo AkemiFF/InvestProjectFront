@@ -1,5 +1,5 @@
 // services/admin-service.ts
-import { apiAdmin } from './api-client';
+import { apiAdmin } from '../lib/api-client';
 import type { 
   UserManagementData, 
   ProjectManagementData, 

@@ -1,8 +1,8 @@
 // services/messaging-service.ts
-import { apiClient } from './api-client';
+import { apiClient } from '../lib/api-client';
 import type { MessageCreateData, ConversationCreateData } from '@/types/messaging';
 
-const messagingService = {
+export const messagingService = {
   // Conversations
   getConversations: () => {
     return apiClient.get('/api/messaging/conversations/');

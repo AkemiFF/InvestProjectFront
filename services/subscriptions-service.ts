@@ -1,5 +1,5 @@
 // services/subscriptions-service.ts
-import { apiClient } from './api-client';
+import { apiClient } from '../lib/api-client';
 import type { 
   SubscriptionCreateData, 
   ProjectBoostData 
