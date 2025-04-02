@@ -2,6 +2,7 @@
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { useLayoutContext } from "@/components/layout/LayoutContext";
+import projectsService from "@/services/projects-service";
 import { apiClient } from "@/lib/api-client";
 import { ApiError } from "@/types/base";
 import { useEffect } from "react";
@@ -32,11 +33,14 @@ export default function InvestorDashboard() {
         // if (userAuth.isAuthenticated()) { ... }
         const fetchProjects = async () => {
             try {
-                const response = await apiClient.get("/projects");
+                const response = await projectsService.getAllProjects();
 
                 // Vérification de la réponse
                 if (response.status === 200 && response.data) {
-                    return response.data;
+                    const data = response.data
+                    console.log(data);
+
+                    return data;
                 }
 
                 throw new Error("Réponse invalide du serveur");
