@@ -678,7 +678,10 @@ export default function ProjectListingPage() {
                 <Button
                   variant="outline"
                   className="border-slate-700 text-slate-300 hover:bg-slate-800"
-                  onClick={() => document.querySelector('[data-value="all"]')?.click()}
+                  onClick={() => {
+                    const allTab = document.querySelector('[data-value="all"]') as HTMLElement | null;
+                    allTab?.click();
+                  }}
                 >
                   Browse Projects
                 </Button>
