@@ -1,4 +1,11 @@
 // types/projects.ts
+export interface Media {
+  id: number
+  file_url: string
+  file_type: string
+  title: string
+  uploaded_at: string
+}
 export interface Project {
   id: number
   title: string
@@ -32,14 +39,7 @@ export interface Project {
   days_left: number
   participants_count: number
   interests_count: number
-  media:        {
-            id: number
-            file_url: string
-            file_type: string
-            title: string
-            uploaded_at: string
-        }
-  // Champs optionnels qui pourraient être présents dans d'autres contextes
+  media: Media[]
   description?: string
   location?: string
   thumbnail?: string
