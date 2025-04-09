@@ -2,18 +2,17 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import projectsService from "@/services/projects-service"
 import {
   ArrowRight,
   Briefcase,
@@ -21,18 +20,46 @@ import {
   CheckCircle2,
   DollarSign,
   FileText,
-  Image,
+  ImageIcon,
+  ImageIcon as ImageIcon2,
   Info,
   Layers,
   Link,
   MapPin,
+  Plus,
   Save,
+  Trash2,
   Upload,
+  User,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+
+// Define the team member interface
+interface TeamMember {
+  name: string
+  role: string
+  photo?: File
+  facebook_url?: string
+}
 
 export default function ProjectSubmissionPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [sectors, setSectors] = useState<{ id: number; name: string; description: string }[]>([])
+
+  useEffect(() => {
+    const fetchSectors = async () => {
+      try {
+        const response = await projectsService.getAllSectors()
+        setSectors(response.data.results)
+      } catch (error) {
+        console.error("Error fetching sectors:", error)
+      }
+    }
+
+    fetchSectors()
+  }, [])
   const [currentTab, setCurrentTab] = useState("basics")
   const [formComplete, setFormComplete] = useState(false)
   const [formData, setFormData] = useState({
@@ -49,7 +76,7 @@ export default function ProjectSubmissionPage() {
     useOfFunds: "",
     financialProjections: "",
     risks: "",
-    team: "",
+    team: [] as TeamMember[],
     milestones: "",
     equity: "",
     minimumInvestment: "",
@@ -58,7 +85,24 @@ export default function ProjectSubmissionPage() {
     returnTimeline: "",
     allowPartialFunding: true,
     isPublic: true,
+    videoUrl: "",
   })
+
+  // State for new team member form
+  const [newTeamMember, setNewTeamMember] = useState<TeamMember>({
+    name: "",
+    role: "",
+  })
+
+  // State for photo preview
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+
+  // Add these state variables for file uploads
+  const [coverImage, setCoverImage] = useState<File | null>(null)
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null)
+  const [galleryImages, setGalleryImages] = useState<File[]>([])
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([])
+  const [documents, setDocuments] = useState<File[]>([])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -73,20 +117,152 @@ export default function ProjectSubmissionPage() {
     setFormData((prev) => ({ ...prev, [name]: checked }))
   }
 
+  // Handle changes to the new team member form
+  const handleTeamMemberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setNewTeamMember((prev) => ({ ...prev, [name]: value }))
+  }
+
+  // Handle photo upload
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setNewTeamMember((prev) => ({ ...prev, photo: file }))
+
+      // Create a preview URL
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        setPhotoPreview(event.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Handle cover image upload
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setCoverImage(file)
+
+      // Create a preview URL
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        setCoverImagePreview(event.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Handle gallery images upload
+  const handleGalleryImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files).slice(0, 5 - galleryImages.length) // Limit to 5 images total
+      setGalleryImages((prev) => [...prev, ...files])
+
+      // Create preview URLs
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          setGalleryPreviews((prev) => [...prev, event.target?.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
+    }
+  }
+
+  // Handle documents upload
+  const handleDocumentsUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files)
+      setDocuments((prev) => [...prev, ...files])
+    }
+  }
+
+  // Add a new team member
+  const addTeamMember = () => {
+    if (newTeamMember.name && newTeamMember.role) {
+      setFormData((prev) => ({
+        ...prev,
+        team: [...prev.team, { ...newTeamMember }],
+      }))
+
+      // Reset the form and preview
+      setNewTeamMember({ name: "", role: "" })
+      setPhotoPreview(null)
+    }
+  }
+
+  // Remove a team member
+  const removeTeamMember = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      team: prev.team.filter((_, i) => i !== index),
+    }))
+  }
+
+  // Remove a gallery image
+  const removeGalleryImage = (index: number) => {
+    setGalleryImages(galleryImages.filter((_, i) => i !== index))
+    setGalleryPreviews(galleryPreviews.filter((_, i) => i !== index))
+  }
+
+  // Remove a document
+  const removeDocument = (index: number) => {
+    setDocuments(documents.filter((_, i) => i !== index))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
+    // Create project data with files
+    const projectData = {
+      title: formData.title,
+      description: formData.fullDescription,
+      amount_needed: formData.targetAmount,
+      deadline: new Date(Date.now() + Number(formData.duration) * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      sector_id: sectors.find((sector) => sector.name === formData.sector)?.id || null, // Map sector name to ID
+      funding_type: "equity", // Add funding type (adjust as needed)
+      location: formData.location,
+      short_description: formData.shortDescription,
+      business_model: formData.businessModel,
+      market_analysis: formData.marketAnalysis,
+      competitive_advantage: formData.competitiveAdvantage,
+      use_of_funds: formData.useOfFunds,
+      financial_projections: formData.financialProjections,
+      risks: formData.risks,
+      team: formData.team,
+      equity: formData.equity,
+      minimum_investment: formData.minimumInvestment,
+      maximum_investment: formData.maximumInvestment,
+      expected_return: formData.expectedReturn as unknown as number,
+      return_timeline: formData.returnTimeline,
+      allow_partial_funding: formData.allowPartialFunding,
+      is_public: formData.isPublic,
+      video_url: formData.videoUrl,
+      // Add the files
+      cover_image: coverImage,
+      images: galleryImages,
+      documents: documents,
+    }
+
+    try {
+      console.log(projectData);
+
+      await projectsService.createProject(projectData)
+
       setIsLoading(false)
       setFormComplete(true)
 
       // Redirect after 2 seconds
       setTimeout(() => {
-        router.push("/projects/manage")
+        // router.push("/projects/manage")
       }, 2000)
-    }, 1500)
+    } catch (error) {
+      console.error("Error submitting project:", error)
+      setIsLoading(false)
+      // Handle error (could add error state and display message)
+    }
   }
 
   const handleNextTab = () => {
@@ -221,16 +397,11 @@ export default function ProjectSubmissionPage() {
                               <SelectValue placeholder="Select project sector" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="technology">Technology</SelectItem>
-                              <SelectItem value="green-energy">Green Energy</SelectItem>
-                              <SelectItem value="healthcare">Healthcare</SelectItem>
-                              <SelectItem value="agriculture">Agriculture</SelectItem>
-                              <SelectItem value="education">Education</SelectItem>
-                              <SelectItem value="real-estate">Real Estate</SelectItem>
-                              <SelectItem value="finance">Finance</SelectItem>
-                              <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                              <SelectItem value="tourism">Tourism</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
+                              {sectors.map((sector) => (
+                                <SelectItem key={sector.id} value={sector.name}>
+                                  {sector.name}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -367,19 +538,166 @@ export default function ProjectSubmissionPage() {
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="team" className="text-slate-300">
-                          Team Information
-                        </Label>
-                        <Textarea
-                          id="team"
-                          name="team"
-                          placeholder="Describe your team, their expertise, and relevant experience"
-                          className="min-h-[100px] bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
-                          value={formData.team}
-                          onChange={handleChange}
-                          required
-                        />
+                      {/* Team Information Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-slate-300 text-lg">Team Members</Label>
+                          <p className="text-xs text-slate-500">Add key team members to build investor confidence</p>
+                        </div>
+
+                        {/* List of existing team members */}
+                        {formData.team.length > 0 && (
+                          <div className="space-y-4 mb-6">
+                            {formData.team.map((member, index) => (
+                              <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+                                      {member.photo ? (
+                                        <div
+                                          className="h-full w-full bg-cover bg-center"
+                                          style={{
+                                            backgroundImage: `url(${URL.createObjectURL(member.photo)})`,
+                                          }}
+                                        ></div>
+                                      ) : (
+                                        <User className="h-6 w-6 text-slate-400" />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-medium text-slate-200">{member.name}</h4>
+                                      <p className="text-sm text-slate-400">{member.role}</p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeTeamMember(index)}
+                                    className="text-slate-400 hover:text-red-400 hover:bg-red-900/20"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                {member.facebook_url && (
+                                  <div className="flex items-center text-sm text-cyan-400">
+                                    <Link className="h-3 w-3 mr-1" />
+                                    <a
+                                      href={member.facebook_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="truncate"
+                                    >
+                                      {member.facebook_url}
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Add new team member form */}
+                        <div className="bg-slate-800/30 border border-dashed border-slate-700 rounded-lg p-4">
+                          <h4 className="font-medium text-slate-300 mb-4 flex items-center">
+                            <User className="h-4 w-4 mr-2" /> Add Team Member
+                          </h4>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="memberName" className="text-slate-300">
+                                Name
+                              </Label>
+                              <Input
+                                id="memberName"
+                                name="name"
+                                placeholder="Full name"
+                                className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                                value={newTeamMember.name}
+                                onChange={handleTeamMemberChange}
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="memberRole" className="text-slate-300">
+                                Role
+                              </Label>
+                              <Input
+                                id="memberRole"
+                                name="role"
+                                placeholder="e.g. CEO, CTO, Marketing Director"
+                                className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                                value={newTeamMember.role}
+                                onChange={handleTeamMemberChange}
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="memberUrl" className="text-slate-300">
+                                Profile URL (Optional)
+                              </Label>
+                              <div className="relative">
+                                <Link className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                                <Input
+                                  id="memberUrl"
+                                  name="facebook_url"
+                                  placeholder="LinkedIn, personal website, etc."
+                                  className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                                  value={newTeamMember.facebook_url || ""}
+                                  onChange={handleTeamMemberChange}
+                                />
+                              </div>
+                              <p className="text-xs text-slate-500">Any professional profile link, not just Facebook</p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="memberPhoto" className="text-slate-300">
+                                Photo (Optional)
+                              </Label>
+                              <div className="flex items-center gap-4">
+                                <div className="h-16 w-16 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700">
+                                  {photoPreview ? (
+                                    <div
+                                      className="h-full w-full bg-cover bg-center"
+                                      style={{ backgroundImage: `url(${photoPreview})` }}
+                                    ></div>
+                                  ) : (
+                                    <User className="h-8 w-8 text-slate-500" />
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <Input
+                                    id="memberPhoto"
+                                    name="photo"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handlePhotoUpload}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => document.getElementById("memberPhoto")?.click()}
+                                    className="w-full border-slate-700 text-slate-300 hover:bg-slate-800"
+                                  >
+                                    <Upload className="mr-2 h-4 w-4" /> Select Photo
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              onClick={addTeamMember}
+                              disabled={!newTeamMember.name || !newTeamMember.role}
+                              className="bg-slate-700 hover:bg-slate-600 text-slate-100"
+                            >
+                              <Plus className="mr-2 h-4 w-4" /> Add Team Member
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -575,11 +893,48 @@ export default function ProjectSubmissionPage() {
                       <div className="space-y-2">
                         <Label className="text-slate-300">Project Cover Image</Label>
                         <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-800/30">
-                          <Image className="h-10 w-10 text-slate-500 mb-2" />
-                          <p className="text-sm text-slate-400 mb-2">Drag and drop or click to upload</p>
-                          <p className="text-xs text-slate-500 mb-4">PNG, JPG or WEBP (Max 5MB)</p>
-                          <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
-                            <Upload className="mr-2 h-4 w-4" /> Select File
+                          {coverImagePreview ? (
+                            <div className="mb-4 relative">
+                              <img
+                                src={coverImagePreview || "/placeholder.svg"}
+                                alt="Cover preview"
+                                className="h-40 w-auto rounded-md object-cover"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute -top-2 -right-2"
+                                onClick={() => {
+                                  setCoverImage(null)
+                                  setCoverImagePreview(null)
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <ImageIcon className="h-10 w-10 text-slate-500 mb-2" />
+                              <p className="text-sm text-slate-400 mb-2">Drag and drop or click to upload</p>
+                              <p className="text-xs text-slate-500 mb-4">PNG, JPG or WEBP (Max 5MB)</p>
+                            </>
+                          )}
+                          <Input
+                            id="coverImage"
+                            name="coverImage"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleCoverImageUpload}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => document.getElementById("coverImage")?.click()}
+                            className="border-slate-700 hover:bg-slate-800"
+                          >
+                            <Upload className="mr-2 h-4 w-4" /> {coverImage ? "Change Image" : "Select File"}
                           </Button>
                         </div>
                       </div>
@@ -587,12 +942,56 @@ export default function ProjectSubmissionPage() {
                       <div className="space-y-2">
                         <Label className="text-slate-300">Project Gallery (Up to 5 images)</Label>
                         <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-800/30">
-                          <Image className="h-10 w-10 text-slate-500 mb-2" />
-                          <p className="text-sm text-slate-400 mb-2">Drag and drop or click to upload</p>
-                          <p className="text-xs text-slate-500 mb-4">PNG, JPG or WEBP (Max 5MB each)</p>
-                          <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
-                            <Upload className="mr-2 h-4 w-4" /> Select Files
+                          {galleryPreviews.length > 0 ? (
+                            <div className="mb-4 grid grid-cols-2 md:grid-cols-3 gap-2 w-full">
+                              {galleryPreviews.map((preview, index) => (
+                                <div key={index} className="relative">
+                                  <img
+                                    src={preview || "/placeholder.svg"}
+                                    alt={`Gallery image ${index + 1}`}
+                                    className="h-24 w-full rounded-md object-cover"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    className="absolute -top-2 -right-2"
+                                    onClick={() => removeGalleryImage(index)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <>
+                              <ImageIcon2 className="h-10 w-10 text-slate-500 mb-2" />
+                              <p className="text-sm text-slate-400 mb-2">Drag and drop or click to upload</p>
+                              <p className="text-xs text-slate-500 mb-4">PNG, JPG or WEBP (Max 5MB each)</p>
+                            </>
+                          )}
+                          <Input
+                            id="galleryImages"
+                            name="galleryImages"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleGalleryImagesUpload}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => document.getElementById("galleryImages")?.click()}
+                            className="border-slate-700 hover:bg-slate-800"
+                            disabled={galleryImages.length >= 5}
+                          >
+                            <Upload className="mr-2 h-4 w-4" />{" "}
+                            {galleryImages.length > 0 ? "Add More Images" : "Select Files"}
                           </Button>
+                          {galleryImages.length >= 5 && (
+                            <p className="text-xs text-amber-500 mt-2">Maximum of 5 images reached</p>
+                          )}
                         </div>
                       </div>
 
@@ -603,8 +1002,11 @@ export default function ProjectSubmissionPage() {
                           <div className="relative w-full max-w-md">
                             <Link className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                             <Input
+                              name="videoUrl"
                               placeholder="https://youtube.com/watch?v=..."
                               className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 w-full"
+                              value={formData.videoUrl}
+                              onChange={handleChange}
                             />
                           </div>
                         </div>
@@ -613,11 +1015,55 @@ export default function ProjectSubmissionPage() {
                       <div className="space-y-2">
                         <Label className="text-slate-300">Supporting Documents (Optional)</Label>
                         <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-800/30">
-                          <FileText className="h-10 w-10 text-slate-500 mb-2" />
-                          <p className="text-sm text-slate-400 mb-2">Upload business plan, financial models, etc.</p>
-                          <p className="text-xs text-slate-500 mb-4">PDF, DOCX, XLSX (Max 10MB each)</p>
-                          <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
-                            <Upload className="mr-2 h-4 w-4" /> Select Documents
+                          {documents.length > 0 ? (
+                            <div className="mb-4 w-full space-y-2">
+                              {documents.map((doc, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-slate-800 p-2 rounded-md"
+                                >
+                                  <div className="flex items-center">
+                                    <FileText className="h-5 w-5 text-slate-400 mr-2" />
+                                    <span className="text-sm text-slate-300 truncate max-w-[200px]">{doc.name}</span>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeDocument(index)}
+                                    className="text-slate-400 hover:text-red-400 hover:bg-red-900/20"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <>
+                              <FileText className="h-10 w-10 text-slate-500 mb-2" />
+                              <p className="text-sm text-slate-400 mb-2">
+                                Upload business plan, financial models, etc.
+                              </p>
+                              <p className="text-xs text-slate-500 mb-4">PDF, DOCX, XLSX (Max 10MB each)</p>
+                            </>
+                          )}
+                          <Input
+                            id="documents"
+                            name="documents"
+                            type="file"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                            multiple
+                            className="hidden"
+                            onChange={handleDocumentsUpload}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => document.getElementById("documents")?.click()}
+                            className="border-slate-700 hover:bg-slate-800"
+                          >
+                            <Upload className="mr-2 h-4 w-4" />{" "}
+                            {documents.length > 0 ? "Add More Documents" : "Select Documents"}
                           </Button>
                         </div>
                       </div>
@@ -714,9 +1160,35 @@ export default function ProjectSubmissionPage() {
                             <p className="text-xs text-slate-500">Competitive Advantage</p>
                             <p className="text-sm text-slate-300">{formData.competitiveAdvantage || "Not provided"}</p>
                           </div>
+
+                          {/* Team Members Review */}
                           <div>
-                            <p className="text-xs text-slate-500">Team Information</p>
-                            <p className="text-sm text-slate-300">{formData.team || "Not provided"}</p>
+                            <p className="text-xs text-slate-500">Team Members</p>
+                            {formData.team.length > 0 ? (
+                              <div className="mt-2 space-y-2">
+                                {formData.team.map((member, index) => (
+                                  <div key={index} className="flex items-center gap-2 text-sm text-slate-300">
+                                    <div className="h-6 w-6 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+                                      {member.photo ? (
+                                        <div
+                                          className="h-full w-full bg-cover bg-center"
+                                          style={{
+                                            backgroundImage: `url(${URL.createObjectURL(member.photo)})`,
+                                          }}
+                                        ></div>
+                                      ) : (
+                                        <User className="h-4 w-4 text-slate-400" />
+                                      )}
+                                    </div>
+                                    <span className="font-medium">{member.name}</span>
+                                    <span className="text-slate-500">-</span>
+                                    <span>{member.role}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-slate-300">No team members added</p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -781,6 +1253,41 @@ export default function ProjectSubmissionPage() {
                         </div>
                       </div>
 
+                      {/* Media Review Section */}
+                      <div>
+                        <h3 className="text-lg font-medium text-slate-200 mb-2 flex items-center">
+                          <ImageIcon className="mr-2 h-5 w-5 text-cyan-500" /> Media & Documents
+                        </h3>
+                        <div className="bg-slate-800/30 rounded-lg p-4 space-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-xs text-slate-500">Cover Image</p>
+                              <p className="text-sm text-slate-300">{coverImage ? coverImage.name : "Not provided"}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-500">Gallery Images</p>
+                              <p className="text-sm text-slate-300">
+                                {galleryImages.length > 0
+                                  ? `${galleryImages.length} image${galleryImages.length > 1 ? "s" : ""} uploaded`
+                                  : "No images uploaded"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-500">Video URL</p>
+                              <p className="text-sm text-slate-300">{formData.videoUrl || "Not provided"}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-500">Supporting Documents</p>
+                              <p className="text-sm text-slate-300">
+                                {documents.length > 0
+                                  ? `${documents.length} document${documents.length > 1 ? "s" : ""} uploaded`
+                                  : "No documents uploaded"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
                           <Switch
@@ -837,4 +1344,3 @@ export default function ProjectSubmissionPage() {
     </DashboardLayout>
   )
 }
-
