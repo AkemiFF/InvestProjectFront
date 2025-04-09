@@ -45,7 +45,7 @@ export default function LoginPage() {
       if (response.status === 200) {
         const res = response.data;
         userAuth.save(res);
-        console.log(res);
+        // console.log(res);
         updateUser({
           id: res.user_id,
           username: res.username,
@@ -53,7 +53,7 @@ export default function LoginPage() {
           userType: res.role,
           pic: res.pic,
         })
-        console.log(user);
+        // console.log(user);
 
         router.push("/")
       } else {

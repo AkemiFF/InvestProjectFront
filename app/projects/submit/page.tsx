@@ -253,16 +253,15 @@ export default function ProjectSubmissionPage() {
     }
 
     try {
-      console.log(projectData);
 
       await projectsService.createProject(projectData)
 
-      // setIsLoading(false)
-      // setFormComplete(true)
+      setIsLoading(false)
+      setFormComplete(true)
 
       // Redirect after 2 seconds
       setTimeout(() => {
-        // router.push("/projects/manage")
+        router.push("/projects/manage")
       }, 2000)
     } catch (error) {
       console.error("Error submitting project:", error)
