@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { projectsService } from "@/services/projects-service"
 import type { Project } from "@/types/projects"
-import { Briefcase, Filter, Loader, Search, SlidersHorizontal, Star, X } from "lucide-react"
+import { Briefcase, Filter, Loader, Plus, Search, SlidersHorizontal, Star, X } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
@@ -317,6 +317,15 @@ export default function ProjectListingPage() {
           </div>
 
           <div className="flex items-center space-x-2">
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-2 h-10 border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-700"
+              onClick={() => window.location.href = "/projects/submit"}
+            ><Plus className="h-4 w-4" />
+              Submit New Project
+            </Button>
             <div className="relative flex-1 md:w-64">
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
               <Input
