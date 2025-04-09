@@ -23,6 +23,7 @@ export interface Project {
   }
   amount_needed: string
   amount_raised: string
+  minimum_investment: string
   status: "draft" | "pending" | "active" | "funded" | "failed" | "cancelled"
   created_at: string
   deadline: string
@@ -31,7 +32,13 @@ export interface Project {
   days_left: number
   participants_count: number
   interests_count: number
-
+  media:        {
+            id: number
+            file_url: string
+            file_type: string
+            title: string
+            uploaded_at: string
+        }
   // Champs optionnels qui pourraient être présents dans d'autres contextes
   description?: string
   location?: string

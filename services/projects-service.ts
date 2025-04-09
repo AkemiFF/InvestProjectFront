@@ -129,7 +129,7 @@ export const projectsService = {
 
   // Secteurs
   getAllSectors: () => {
-    return apiClient.get("/api/projects/sectors/")
+    return apiClient.get("/api/sectors/")
   },
 
   getSectorById: (id: number | string) => {
