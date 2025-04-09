@@ -7,6 +7,13 @@ export interface Media {
   title: string
   uploaded_at: string
 }
+export interface Team {
+  id: number
+  name: string
+  role: string
+  photo: string
+  facebook_url: string
+}
 export interface Project {
   id: number
   title: string
@@ -32,6 +39,7 @@ export interface Project {
   amount_needed: string
   amount_raised: string
   minimum_investment: string
+  maximum_investment: string
   status: "draft" | "pending" | "active" | "funded" | "failed" | "cancelled"
   created_at: string
   deadline: string
@@ -41,13 +49,23 @@ export interface Project {
   participants_count: number
   interests_count: number
   media: Media[]
+  short_description?: string
+  market_analysis?: string
   description?: string
   location?: string
   thumbnail?: string
   video_url?: string
   is_verified?: boolean
   updated_at?: string
+  business_model?: string
+  financial_projections?: string
+  competitive_advantage?: string
+  team_members:Team[]
+  expected_return?: number
+  equity?: number
   tags?: string[]
+  risks?: string
+  use_of_funds?: string
 }
 
 export interface ProjectImage {
