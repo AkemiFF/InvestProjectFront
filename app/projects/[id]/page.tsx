@@ -57,8 +57,15 @@ export default function ProjectDetailPage() {
     const fetchProject = async () => {
       try {
         setIsLoadingProject(true)
-        const response = await projectsService.getProjectById(projectId)
-        setProject(response.data)
+        if (typeof projectId === "string" || typeof projectId === "number") {
+          const response = await projectsService.getProjectById(projectId)
+          setProject(response.data)
+          console.log(response.data);
+
+
+        } else {
+          throw new Error("Invalid project ID")
+        }
         setError(null)
       } catch (err) {
         console.error("Error fetching project:", err)
@@ -360,7 +367,7 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
 
-                <p className="text-slate-300 mb-4">{projectExtendedData.shortDescription}</p>
+                <p className="text-slate-300 mb-4">{project.description}</p>
               </CardContent>
             </Card>
 
@@ -405,7 +412,7 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4 text-slate-300">
-                      {projectExtendedData.fullDescription.split("\n\n").map((paragraph, index) => (
+                      {project.description.split("\n\n").map((paragraph, index) => (
                         <p key={index}>{paragraph}</p>
                       ))}
                     </div>
@@ -477,7 +484,7 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {projectExtendedData.gallery.map((image, index) => (
+                      {project.media.map((image, index) => (
                         <div key={index} className="rounded-md overflow-hidden border border-slate-700">
                           <img
                             src={image || "/placeholder.svg"}
@@ -496,7 +503,7 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {projectExtendedData.documents.map((doc, index) => (
+                      {project.media.map((doc, index) => (
                         <div
                           key={index}
                           className="flex items-center justify-between p-3 bg-slate-800/50 rounded-md border border-slate-700/50"
@@ -506,7 +513,7 @@ export default function ProjectDetailPage() {
                               <FileText className="h-4 w-4 text-slate-300" />
                             </div>
                             <div>
-                              <p className="text-sm text-slate-300">{doc.name}</p>
+                              <p className="text-sm text-slate-300">{doc.title}</p>
                               <p className="text-xs text-slate-500">{doc.size}</p>
                             </div>
                           </div>
@@ -560,8 +567,8 @@ export default function ProjectDetailPage() {
                           <h3 className="text-sm font-medium text-slate-200">Investment Range</h3>
                         </div>
                         <p className="text-2xl font-bold text-slate-100">
-                          {formatCurrency(Number.parseInt(projectExtendedData.minimumInvestment))} -{" "}
-                          {formatCurrency(Number.parseInt(projectExtendedData.maximumInvestment))}
+                          {formatCurrency(Number.parseInt(project.minimum_investment))} -{" "}
+                          {formatCurrency(Number.parseInt(project.amount_needed)) - Number.parseInt(project.amount_raised)}
                         </p>
                         <p className="text-xs text-slate-500 mt-1">Min and max investment amounts</p>
                       </div>
