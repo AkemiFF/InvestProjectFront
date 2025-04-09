@@ -231,7 +231,13 @@ export default function ProjectSubmissionPage() {
       use_of_funds: formData.useOfFunds,
       financial_projections: formData.financialProjections,
       risks: formData.risks,
-      team: formData.team,
+      team: JSON.stringify(
+        formData.team.map((member) => ({
+          name: member.name,
+          role: member.role,
+          ...(member.facebook_url ? { facebook_url: member.facebook_url } : {}),
+        })),
+      ),
       equity: formData.equity,
       minimum_investment: formData.minimumInvestment,
       maximum_investment: formData.maximumInvestment,
@@ -251,8 +257,8 @@ export default function ProjectSubmissionPage() {
 
       await projectsService.createProject(projectData)
 
-      setIsLoading(false)
-      setFormComplete(true)
+      // setIsLoading(false)
+      // setFormComplete(true)
 
       // Redirect after 2 seconds
       setTimeout(() => {
