@@ -40,18 +40,18 @@ export interface UserStats {
 
 export const userService = {
   getCurrentUser: async (): Promise<User> => {
-    const response = await apiClient.get<User>("/users/me/");
+    const response = await apiClient.get<User>("/api/users/me/");
     return response.data;
   },
 
   getUserById: async (id: string): Promise<User> => {
-    const response = await apiClient.get<User>(`/users/${id}/`, {
+    const response = await apiClient.get<User>(`/api/users/${id}/`, {
     });
     return response.data;
   },
 
   updateProfile: async (userData: Partial<User>): Promise<User> => {
-    const response = await apiClient.patch<User>("/users/me/", userData);
+    const response = await apiClient.patch<User>("/api/users/me/", userData);
     return response.data;
   },
 
@@ -60,14 +60,14 @@ export const userService = {
     newPassword: string
   ): Promise<{ success: boolean }> => {
     const response = await apiClient.post<{ success: boolean }>(
-      "/users/me/change-password/",
+      "/api/users/me/change-password/",
       { currentPassword, newPassword }
     );
     return response.data;
   },
 
   getUserStats: async (): Promise<UserStats> => {
-    const response = await apiClient.get<UserStats>("/users/me/stats/");
+    const response = await apiClient.get<UserStats>("/api/users/me/stats/");
     return response.data;
   },
 
@@ -75,7 +75,7 @@ export const userService = {
     preferences: User["investmentPreferences"]
   ): Promise<User> => {
     const response = await apiClient.patch<User>(
-      "/users/me/investment-preferences/",
+      "/api/users/me/investment-preferences/",
       preferences
     );
     return response.data;
