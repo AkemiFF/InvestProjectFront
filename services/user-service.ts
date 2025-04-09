@@ -1,4 +1,4 @@
-import { apiRequest } from "@/lib/api-client"
+import { apiClient } from "@/lib/api-client"
 
 export interface User {
   id: string
@@ -36,44 +36,48 @@ export interface UserStats {
   activeInvestments: number
 }
 
+
+
 export const userService = {
   getCurrentUser: async (): Promise<User> => {
-    return apiRequest<User>("/users/me/", {
-      cache: "no-store",
-    })
+    const response = await apiClient.get<User>("/api/users/me/");
+    return response.data;
   },
 
   getUserById: async (id: string): Promise<User> => {
-    return apiRequest<User>(`/users/${id}/`, {
-      cache: "no-store",
-    })
+    const response = await apiClient.get<User>(`/api/users/${id}/`, {
+    });
+    return response.data;
   },
 
   updateProfile: async (userData: Partial<User>): Promise<User> => {
-    return apiRequest<User>("/users/me/", {
-      method: "PATCH",
-      body: userData,
-    })
+    const response = await apiClient.patch<User>("/api/users/me/", userData);
+    return response.data;
   },
 
-  updatePassword: async (currentPassword: string, newPassword: string): Promise<{ success: boolean }> => {
-    return apiRequest<{ success: boolean }>("/users/me/change-password/", {
-      method: "POST",
-      body: { currentPassword, newPassword },
-    })
+  updatePassword: async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ success: boolean }> => {
+    const response = await apiClient.post<{ success: boolean }>(
+      "/api/users/me/change-password/",
+      { currentPassword, newPassword }
+    );
+    return response.data;
   },
 
   getUserStats: async (): Promise<UserStats> => {
-    return apiRequest<UserStats>("/users/me/stats/", {
-      cache: "no-store",
-    })
+    const response = await apiClient.get<UserStats>("/api/users/me/stats/");
+    return response.data;
   },
 
-  updateInvestmentPreferences: async (preferences: User["investmentPreferences"]): Promise<User> => {
-    return apiRequest<User>("/users/me/investment-preferences/", {
-      method: "PATCH",
-      body: preferences,
-    })
+  updateInvestmentPreferences: async (
+    preferences: User["investmentPreferences"]
+  ): Promise<User> => {
+    const response = await apiClient.patch<User>(
+      "/api/users/me/investment-preferences/",
+      preferences
+    );
+    return response.data;
   },
 }
-

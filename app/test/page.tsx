@@ -2,14 +2,14 @@
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { useLayoutContext } from "@/components/layout/LayoutContext";
-import projectsService from "@/services/projects-service";
-import { apiClient } from "@/lib/api-client";
+import { userService } from "@/services/user-service";
 import { ApiError } from "@/types/base";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function InvestorDashboard() {
-    const { user, setUserType, updateUser } = useLayoutContext();
-
+    const { user } = useLayoutContext();
+    const [test, setTest] = useState("Premier valeur")
+    const [loading, setLoading] = useState(true)
     useEffect(() => {
 
 
@@ -33,15 +33,14 @@ export default function InvestorDashboard() {
         // if (userAuth.isAuthenticated()) { ... }
         const fetchProjects = async () => {
             try {
-                const response = await projectsService.getAllProjects();
+                const response = await userService.getCurrentUser();
+                console.log(response);
 
-                // Vérification de la réponse
-                if (response.status === 200 && response.data) {
-                    const data = response.data
-                    console.log(data);
+                const data = response
+                console.log(data);
+                setLoading(false)
+                return data;
 
-                    return data;
-                }
 
                 throw new Error("Réponse invalide du serveur");
             } catch (error) {
@@ -54,11 +53,18 @@ export default function InvestorDashboard() {
         fetchProjects()
     }, []);
 
+
+    setTimeout(() => {
+        setLoading(false)
+    }, 5000);
     return (
         <DashboardLayout userType={user.userType}>
             <div className="grid gap-6">
-
-
+                {loading && (
+                    <>Loading</>
+                )}
+                {/* {test}
+                <button onClick={() => { }}>ito</button> */}
             </div>
         </DashboardLayout>
     )

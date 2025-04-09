@@ -1,4 +1,19 @@
 // types/projects.ts
+export interface Media {
+  cover: boolean
+  id: number
+  file_url: string
+  file_type: string
+  title: string
+  uploaded_at: string
+}
+export interface Team {
+  id: number
+  name: string
+  role: string
+  photo: string
+  facebook_url: string
+}
 export interface Project {
   id: number
   title: string
@@ -24,6 +39,7 @@ export interface Project {
   amount_needed: string
   amount_raised: string
   minimum_investment: string
+  maximum_investment: string
   status: "draft" | "pending" | "active" | "funded" | "failed" | "cancelled"
   created_at: string
   deadline: string
@@ -32,21 +48,24 @@ export interface Project {
   days_left: number
   participants_count: number
   interests_count: number
-  media:        {
-            id: number
-            file_url: string
-            file_type: string
-            title: string
-            uploaded_at: string
-        }
-  // Champs optionnels qui pourraient être présents dans d'autres contextes
+  media: Media[]
+  short_description?: string
+  market_analysis?: string
   description?: string
   location?: string
   thumbnail?: string
   video_url?: string
   is_verified?: boolean
   updated_at?: string
+  business_model?: string
+  financial_projections?: string
+  competitive_advantage?: string
+  team_members:Team[]
+  expected_return?: number
+  equity?: number
   tags?: string[]
+  risks?: string
+  use_of_funds?: string
 }
 
 export interface ProjectImage {
