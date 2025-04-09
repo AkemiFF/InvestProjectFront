@@ -8,7 +8,7 @@ import { ApiError } from "@/types/base";
 import { useEffect } from "react";
 
 export default function InvestorDashboard() {
-    const { user, setUserType, updateUser } = useLayoutContext();
+    const { user } = useLayoutContext();
 
     useEffect(() => {
 
@@ -38,7 +38,7 @@ export default function InvestorDashboard() {
                 // Vérification de la réponse
                 if (response.status === 200 && response.data) {
                     const data = response.data
-                    console.log(data);
+                    console.log(data.results);
 
                     return data;
                 }

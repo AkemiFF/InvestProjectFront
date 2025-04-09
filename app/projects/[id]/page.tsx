@@ -1,18 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useParams } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { projectsService } from "@/services/projects-service"
+import type { Project } from "@/types/projects"
 import {
   AlertCircle,
   ArrowLeft,
@@ -29,17 +29,17 @@ import {
   HelpCircle,
   Info,
   Link2,
+  Loader,
   MapPin,
   MessageSquare,
   Share2,
   Target,
   ThumbsUp,
   Users,
-  Loader,
 } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { projectsService } from "@/services/projects-service"
-import type { Project } from "@/types/projects"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -412,7 +412,7 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4 text-slate-300">
-                      {project.description.split("\n\n").map((paragraph, index) => (
+                      {project.description?.split("\n\n").map((paragraph, index) => (
                         <p key={index}>{paragraph}</p>
                       ))}
                     </div>
@@ -484,15 +484,16 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {project.media.map((image, index) => (
-                        <div key={index} className="rounded-md overflow-hidden border border-slate-700">
-                          <img
-                            src={image || "/placeholder.svg"}
-                            alt={`Project image ${index + 1}`}
-                            className="w-full h-40 object-cover"
-                          />
-                        </div>
-                      ))}
+                      {project.media.map((data, index) => (
+                        data.file_type === "image" && (
+                          <div key={index} className="rounded-md overflow-hidden border border-slate-700">
+                            <img
+                              src={data.file_url || "/placeholder.svg"}
+                              alt={`Project image ${index + 1}`}
+                              className="w-full h-40 object-cover"
+                            />
+                          </div>
+                        )))}
                     </div>
                   </CardContent>
                 </Card>
@@ -504,24 +505,25 @@ export default function ProjectDetailPage() {
                   <CardContent>
                     <div className="space-y-3">
                       {project.media.map((doc, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 bg-slate-800/50 rounded-md border border-slate-700/50"
-                        >
-                          <div className="flex items-center">
-                            <div className="h-8 w-8 rounded bg-slate-700 flex items-center justify-center mr-3">
-                              <FileText className="h-4 w-4 text-slate-300" />
+                        (doc.file_type === "pdf" || doc.file_type === "doc") && (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-slate-800/50 rounded-md border border-slate-700/50"
+                          >
+                            <div className="flex items-center">
+                              <div className="h-8 w-8 rounded bg-slate-700 flex items-center justify-center mr-3">
+                                <FileText className="h-4 w-4 text-slate-300" />
+                              </div>
+                              <div>
+                                <p className="text-sm text-slate-300">{doc.title}</p>
+                                {/* <p className="text-xs text-slate-500">{doc.size}</p> */}
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm text-slate-300">{doc.title}</p>
-                              <p className="text-xs text-slate-500">{doc.size}</p>
-                            </div>
+                            <Button variant="outline" size="sm" className="h-8 border-slate-700 hover:bg-slate-800">
+                              <Download className="h-4 w-4 mr-1" /> Download
+                            </Button>
                           </div>
-                          <Button variant="outline" size="sm" className="h-8 border-slate-700 hover:bg-slate-800">
-                            <Download className="h-4 w-4 mr-1" /> Download
-                          </Button>
-                        </div>
-                      ))}
+                        )))}
                     </div>
                   </CardContent>
                 </Card>
@@ -568,7 +570,7 @@ export default function ProjectDetailPage() {
                         </div>
                         <p className="text-2xl font-bold text-slate-100">
                           {formatCurrency(Number.parseInt(project.minimum_investment))} -{" "}
-                          {formatCurrency(Number.parseInt(project.amount_needed)) - Number.parseInt(project.amount_raised)}
+                          {formatCurrency(Number.parseInt(project.amount_needed) - Number.parseInt(project.amount_raised))}
                         </p>
                         <p className="text-xs text-slate-500 mt-1">Min and max investment amounts</p>
                       </div>
