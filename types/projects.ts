@@ -1,5 +1,6 @@
 // types/projects.ts
 export interface Media {
+  cover: boolean
   id: number
   file_url: string
   file_type: string
