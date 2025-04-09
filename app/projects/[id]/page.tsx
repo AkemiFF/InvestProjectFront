@@ -526,27 +526,35 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {project.media.map((doc, index) => (
-                        (doc.file_type === "pdf" || doc.file_type === "doc") && (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-slate-800/50 rounded-md border border-slate-700/50"
-                          >
-                            <div className="flex items-center">
-                              <div className="h-8 w-8 rounded bg-slate-700 flex items-center justify-center mr-3">
-                                <FileText className="h-4 w-4 text-slate-300" />
+                      {project.media.map(
+                        (doc, index) =>
+                          (doc.file_type === "pdf" || doc.file_type === "doc") && (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-3 bg-slate-800/50 rounded-md border border-slate-700/50"
+                            >
+                              <div className="flex items-center">
+                                <div className="h-8 w-8 rounded bg-slate-700 flex items-center justify-center mr-3">
+                                  <FileText className="h-4 w-4 text-slate-300" />
+                                </div>
+                                <div>
+                                  <p className="text-sm text-slate-300">{doc.title}</p>
+                                  {/* <p className="text-xs text-slate-500">{doc.size}</p> */}
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-sm text-slate-300">{doc.title}</p>
-                                {/* <p className="text-xs text-slate-500">{doc.size}</p> */}
-                              </div>
+                              <a
+                                href={doc.file_url}
+                                download
+                                className="inline-flex items-center text-sm px-3 h-8 border border-slate-700 rounded-md text-slate-300 hover:bg-slate-800 transition"
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </a>
                             </div>
-                            <Button variant="outline" size="sm" className="h-8 border-slate-700 hover:bg-slate-800">
-                              <Download className="h-4 w-4 mr-1" /> Download
-                            </Button>
-                          </div>
-                        )))}
+                          )
+                      )}
                     </div>
+
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -869,7 +877,7 @@ export default function ProjectDetailPage() {
                         {investmentAmount
                           ? formatCurrency(
                             Number.parseInt(investmentAmount) *
-                            (1 + Number.parseInt(project.expected_return) / 100),
+                            (1 + Number.parseInt(String(project.expected_return)) / 100),
                           )
                           : "0 MGA"}
                       </div>
