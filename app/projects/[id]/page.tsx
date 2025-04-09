@@ -294,11 +294,16 @@ export default function ProjectDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm overflow-hidden">
               <div className="relative h-64 bg-slate-800">
-                <img
-                  src={projectExtendedData.gallery[0] || "/placeholder.svg"}
-                  alt={project.title}
-                  className="w-full h-full object-cover"
-                />
+                {project.media.map((data, index) => (
+                  data.file_type === "image" && data.cover && (
+                    <img
+                      key={data.id}
+                      src={data.file_url || "/placeholder.svg"}
+                      alt={data.title}
+                      className="w-full h-full object-cover"
+                    />
+                  )))}
+
                 {project.is_featured && (
                   <div className="absolute top-0 right-0">
                     <div className="bg-cyan-500 text-xs font-medium px-2 py-0.5 text-black transform rotate-45 translate-x-6 translate-y-1">
@@ -486,7 +491,7 @@ export default function ProjectDetailPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {project.media.map((data, index) => (
                         data.file_type === "image" && (
-                          <div key={index} className="rounded-md overflow-hidden border border-slate-700">
+                          <div key={data.id} className="rounded-md overflow-hidden border border-slate-700">
                             <img
                               src={data.file_url || "/placeholder.svg"}
                               alt={`Project image ${index + 1}`}
