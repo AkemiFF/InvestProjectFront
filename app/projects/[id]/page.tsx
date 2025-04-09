@@ -1,5 +1,6 @@
 "use client"
 
+import { Facebook } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -61,8 +62,6 @@ export default function ProjectDetailPage() {
           const response = await projectsService.getProjectById(projectId)
           setProject(response.data)
           console.log(response.data);
-
-
         } else {
           throw new Error("Invalid project ID")
         }
@@ -94,7 +93,7 @@ export default function ProjectDetailPage() {
       projects: 3,
       successRate: 100,
     },
-    team: [
+    team_members: [
       {
         name: "Dr. Sarah Johnson",
         role: "CEO & Director",
@@ -111,14 +110,12 @@ export default function ProjectDetailPage() {
         image: "/placeholder.svg?height=40&width=40",
       },
     ],
-    businessModel:
-      "Our business model is based on a subscription service for providers. We offer tiered pricing based on the size of the facility and the number of users. Additionally, we will generate revenue through partnerships for anonymized data insights.",
     marketAnalysis:
       "The global market is projected to reach $45.2 billion by 2026, growing at a CAGR of 44.9%. There is increasing demand for solutions that can reduce costs while improving outcomes. Our target market includes businesses, organizations, and individual practitioners.",
     competitiveAdvantage:
       "Unlike competitors who focus solely on specific support or automation, our solution provides comprehensive support across the entire journey. Our proprietary algorithms have demonstrated 15% higher accuracy compared to leading competitors in blind tests.",
     useOfFunds:
-      "The funds raised will be allocated as follows:\n- 40% for model refinement and expansion\n- 25% for regulatory approvals and compliance\n- 20% for marketing and business development\n- 15% for operational expenses and team expansion",
+      "The funds raised will be allocated as follows:\n- 40% for model refinement and expansion\n- 25% for regulatory approvals and compliance\n- 20% for marketing and business development\n- 15% for operational expenses and team_members expansion",
     risks:
       "Key risks include regulatory challenges in different markets, competition from established providers, and potential data privacy concerns. We are mitigating these risks through proactive regulatory engagement, continuous innovation, and implementing robust data security measures that exceed industry standards.",
     equity: "12",
@@ -174,7 +171,7 @@ export default function ProjectDetailPage() {
         },
         date: "2023-11-12",
         content:
-          "This project has enormous potential to transform the industry in our region. I'm particularly impressed by the team's expertise and track record.",
+          "This project has enormous potential to transform the industry in our region. I'm particularly impressed by the team_members's expertise and track record.",
       },
       {
         user: {
@@ -183,7 +180,7 @@ export default function ProjectDetailPage() {
         },
         date: "2023-11-08",
         content:
-          "I've been following this team's work for some time, and their approach is truly innovative. Looking forward to seeing this project succeed!",
+          "I've been following this team_members's work for some time, and their approach is truly innovative. Looking forward to seeing this project succeed!",
       },
     ],
     documents: [
@@ -368,11 +365,11 @@ export default function ProjectDetailPage() {
                   </div>
                   <div className="bg-slate-800/50 rounded p-2 text-center">
                     <div className="text-xs text-slate-500 mb-1">Return</div>
-                    <div className="text-sm font-medium text-slate-300">{projectExtendedData.expectedReturn}%</div>
+                    <div className="text-sm font-medium text-slate-300">{project.expected_return}%</div>
                   </div>
                 </div>
 
-                <p className="text-slate-300 mb-4">{project.description}</p>
+                <p className="text-slate-300 mb-4">{project.short_description}</p>
               </CardContent>
             </Card>
 
@@ -391,7 +388,7 @@ export default function ProjectDetailPage() {
                   Financials
                 </TabsTrigger>
                 <TabsTrigger
-                  value="team"
+                  value="team_members"
                   className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
                 >
                   Team
@@ -424,38 +421,58 @@ export default function ProjectDetailPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Business Model</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4 text-slate-300">
-                      <p>{projectExtendedData.businessModel}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {project.business_model && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Business Model</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4 text-slate-300">
+                        <p>{project.business_model}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Market Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4 text-slate-300">
-                      <p>{projectExtendedData.marketAnalysis}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {project.financial_projections && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Business Model</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4 text-slate-300">
+                        <p>{project.financial_projections}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Competitive Advantage</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4 text-slate-300">
-                      <p>{projectExtendedData.competitiveAdvantage}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {project.market_analysis && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Market Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4 text-slate-300">
+                        <p>{project.market_analysis}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {project.competitive_advantage && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Competitive Advantage</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4 text-slate-300">
+                        <p>{project.competitive_advantage}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
 
                 <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
                   <CardHeader className="pb-2">
@@ -546,7 +563,7 @@ export default function ProjectDetailPage() {
                           <DollarSign className="h-5 w-5 text-cyan-500 mr-2" />
                           <h3 className="text-sm font-medium text-slate-200">Equity Offered</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-100">{projectExtendedData.equity}%</p>
+                        <p className="text-2xl font-bold text-slate-100">{project.equity}%</p>
                         <p className="text-xs text-slate-500 mt-1">Percentage of company equity offered to investors</p>
                       </div>
 
@@ -555,7 +572,7 @@ export default function ProjectDetailPage() {
                           <Target className="h-5 w-5 text-cyan-500 mr-2" />
                           <h3 className="text-sm font-medium text-slate-200">Expected Return</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-100">{projectExtendedData.expectedReturn}%</p>
+                        <p className="text-2xl font-bold text-slate-100">{project.expected_return}%</p>
                         <p className="text-xs text-slate-500 mt-1">Projected annual return on investment</p>
                       </div>
 
@@ -589,7 +606,7 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4 text-slate-300">
-                      {projectExtendedData.useOfFunds.split("\n").map((item, index) => (
+                      {(project.use_of_funds ?? "").split("\n").map((item, index) => (
                         <div key={index} className="flex items-start">
                           <div className="h-5 w-5 rounded-full bg-slate-800 flex items-center justify-center mt-0.5 mr-2">
                             <Check className="h-3 w-3 text-cyan-500" />
@@ -613,13 +630,13 @@ export default function ProjectDetailPage() {
                       </AlertDescription>
                     </Alert>
                     <div className="space-y-4 text-slate-300">
-                      <p>{projectExtendedData.risks}</p>
+                      <p>{project.risks}</p>
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="team" className="space-y-6">
+              <TabsContent value="team_members" className="space-y-6">
                 <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-slate-100 text-lg">Project Owner</CardTitle>
@@ -661,30 +678,43 @@ export default function ProjectDetailPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Team Members</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {projectExtendedData.team.map((member, index) => (
-                        <div
-                          key={index}
-                          className="bg-slate-800/50 rounded-md p-4 border border-slate-700/50 flex flex-col items-center text-center"
-                        >
-                          <Avatar className="h-16 w-16 mb-3">
-                            <AvatarImage src={member.image} alt={member.name} />
-                            <AvatarFallback className="bg-slate-700 text-cyan-500">
-                              {member.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <h4 className="text-sm font-medium text-slate-200 mb-1">{member.name}</h4>
-                          <p className="text-xs text-slate-400">{member.role}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                {project.team_members && project.team_members.length > 0 && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Team datas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {project.team_members.map((member, index) => (
+                          <div
+                            key={index}
+                            className="bg-slate-800/50 rounded-md p-4 border border-slate-700/50 flex flex-col items-center text-center"
+                          >
+                            <Avatar className="h-16 w-16 mb-3">
+                              <AvatarImage src={member.photo} alt={member.name} />
+                              <AvatarFallback className="bg-slate-700 text-cyan-500">
+                                {member.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <h4 className="text-sm font-medium text-slate-200 mb-1">{member.name}</h4>
+                            <p className="text-xs text-slate-400">{member.role}</p>
+                            <a
+                              href={member.facebook_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1 text-xs font-medium text-cyan-400 border border-cyan-500 rounded-full hover:bg-cyan-500/10 transition"
+                            >
+                              <Facebook className="w-3 h-3 mr-1" />
+                              Facebook
+                            </a>
+
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
               </TabsContent>
 
               <TabsContent value="updates" className="space-y-6">
@@ -777,18 +807,33 @@ export default function ProjectDetailPage() {
                       <Input
                         id="investmentAmount"
                         type="number"
-                        placeholder={projectExtendedData.minimumInvestment}
+                        placeholder={project.minimum_investment}
+                        min={project.minimum_investment}
+                        max={project.maximum_investment}
                         className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
                         value={investmentAmount}
-                        onChange={(e) => setInvestmentAmount(e.target.value)}
+                        onChange={(e) => {
+                          const value = Number(e.target.value);
+                          const min = Number(project.minimum_investment);
+                          const max = Number(project.maximum_investment);
+
+                          if (value < min) {
+                            setInvestmentAmount(min.toString());
+                          } else if (value > max) {
+                            setInvestmentAmount(max.toString());
+                          } else {
+                            setInvestmentAmount(value.toString());
+                          }
+                        }}
                       />
+
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">
-                        Min: {formatCurrency(Number.parseInt(projectExtendedData.minimumInvestment))}
+                        Min: {formatCurrency(Number.parseInt(project.minimum_investment))}
                       </span>
                       <span className="text-slate-500">
-                        Max: {formatCurrency(Number.parseInt(projectExtendedData.maximumInvestment))}
+                        Max: {formatCurrency(Number.parseInt(project.maximum_investment))}
                       </span>
                     </div>
                   </div>
@@ -818,13 +863,13 @@ export default function ProjectDetailPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-slate-300">
-                        Potential Return ({projectExtendedData.expectedReturn}%)
+                        Potential Return ({project.expected_return}%)
                       </div>
                       <div className="text-sm font-medium text-green-400">
                         {investmentAmount
                           ? formatCurrency(
                             Number.parseInt(investmentAmount) *
-                            (1 + Number.parseInt(projectExtendedData.expectedReturn) / 100),
+                            (1 + Number.parseInt(project.expected_return) / 100),
                           )
                           : "0 MGA"}
                       </div>
@@ -885,7 +930,7 @@ export default function ProjectDetailPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Expected Return</span>
-                    <span className="text-sm text-slate-300">{projectExtendedData.expectedReturn}%</span>
+                    <span className="text-sm text-slate-300">{project.expected_return}%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Return Timeline</span>
