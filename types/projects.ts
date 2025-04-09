@@ -60,7 +60,7 @@ export interface Project {
   business_model?: string
   financial_projections?: string
   competitive_advantage?: string
-  team_members:Team[]
+  team_members: Team[]
   expected_return?: number
   equity?: number
   tags?: string[]
@@ -89,7 +89,9 @@ export interface ProjectDocument {
 export interface ProjectCreateData {
   title: string
   description: string
-  sector: number | string // ID du secteur
+  short_description: string
+  sector?: number | string // ID du secteur
+  sector_id?: number | string | null// ID du secteur
   amount_needed: number | string
   deadline: string
   location?: string
@@ -98,6 +100,30 @@ export interface ProjectCreateData {
   video_url?: string
   documents?: File[]
   tags?: string[]
+  business_model?: string
+  market_analysis?: string
+  competitive_advantage?: string
+  use_of_funds?: string
+  financial_projections?: string
+  risks?: string
+  team?: {
+    name: string
+    role: string
+    photo?: File
+    facebook_url?: string
+  }[]
+  milestones?: {
+    title: string
+    description: string
+    due_date: string
+  }[]
+  equity?: string
+  minimum_investment?: number | string
+  maximum_investment?: number | string
+  expected_return?: number
+  return_timeline?: string
+  allow_partial_funding?: boolean
+  is_public?: boolean
 }
 
 export interface ProjectUpdateData {

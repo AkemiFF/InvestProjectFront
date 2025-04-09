@@ -9,9 +9,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { apiClient } from "@/lib/api-client"
 import { userAuth } from "@/lib/auth"
 import { BASE_URL } from "@/lib/host"
-import { apiClient } from "@/lib/api-client"
 import { ArrowRight, Github, ChromeIcon as Google, Hexagon, Lock, Mail, Twitter } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -55,7 +55,7 @@ export default function LoginPage() {
         })
         console.log(user);
 
-        router.push("/dashboard")
+        router.push("/")
       } else {
         // Handle login error
         console.error("Login failed:", response.statusText)
