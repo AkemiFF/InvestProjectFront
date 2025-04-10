@@ -3,12 +3,11 @@
 import { StatusItem } from "@/components/dashboard/status-item"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Briefcase, Command, FileText, Heart, MessageSquare, Settings, Shield, Users, Wallet, Zap } from "lucide-react"
+import { Briefcase, Command, FileText, Heart, Logs, MessageSquare, Settings, Shield, Users, Wallet, Zap } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type React from "react"
 import { useEffect, useState } from "react"
-import { useLayoutContext } from "./LayoutContext"
 const adminName = "admin"
 // Configuration des liens
 const routeConfig = {
@@ -23,6 +22,7 @@ const routeConfig = {
     "User Management": `/${adminName}/users`,
     "Projects Management": `/${adminName}/projects`,
     Moderation: `/${adminName}/moderation`,
+    Logs: `/${adminName}/logs`,
     Support: `/${adminName}/centre-aide`
   },
   user: {
@@ -62,7 +62,6 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ userType: initialUserType }: DashboardSidebarProps) {
   const [userType, setUserTp] = useState("")
-  const { user, setUserType, updateUser } = useLayoutContext();
 
   useEffect(() => {
     setUserTp(initialUserType)
@@ -109,7 +108,7 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
               <NavItem icon={Users} label="User Management" href={routeConfig.admin["User Management"]} />
               <NavItem icon={Briefcase} label="Projects" href={routeConfig.admin["Projects Management"]} />
               <NavItem icon={Shield} label="Moderation" href={routeConfig.admin.Moderation} />
-              {/* <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} /> */}
+              <NavItem icon={Logs} label="Logs" href={routeConfig.admin.Logs} />
               <NavItem icon={MessageSquare} label="Support" href={routeConfig.admin.Support} />
               <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />
             </>

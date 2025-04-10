@@ -23,12 +23,26 @@ export interface RevenueData {
 export interface AdminLog {
   id: number;
   admin: number;
+  ip_address: string;
   admin_username: string;
-  action: string;
+  action_type: string;
   entity_type: string;
   entity_id: number;
-  details: string;
+  description: string;
   created_at: string;
+  admin_user?: {
+    id: number;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    user_type: string;
+    profile_picture: string | null;
+    biography: string;
+    phone_number: string;
+    email_verified: boolean;
+    date_joined: string;
+  };
 }
 
 export interface SystemSetting {
@@ -39,6 +53,10 @@ export interface SystemSetting {
   is_public: boolean;
   created_at: string;
   updated_at: string;
+  updated_by?: {
+    id: number
+    username: string
+  }
 }
 
 export interface UserManagementData {
