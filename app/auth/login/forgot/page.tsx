@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { apiClient } from "@/lib/api-client"
-import { adminAuth } from "@/lib/auth"
+import { adminAuth, userAuth } from "@/lib/auth"
 import { BASE_URL } from "@/lib/host"
 import { ArrowRight, Github, ChromeIcon as Google, Hexagon, Lock, Mail, Twitter } from "lucide-react"
 import Link from "next/link"
@@ -45,6 +45,7 @@ export default function LoginPage() {
       if (response.status === 200) {
         const res = response.data;
         adminAuth.save(res);
+        userAuth.save(res);
         // console.log(res);
         updateUser({
           id: res.user_id,
