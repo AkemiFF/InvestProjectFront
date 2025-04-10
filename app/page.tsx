@@ -12,7 +12,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Activity, Briefcase, DollarSign, Filter, Loader, MessageSquare, PieChart, Plus, TrendingUp, Wallet } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export default function InvestorDashboard() {
   const { user } = useLayoutContext();
@@ -27,6 +27,9 @@ export default function InvestorDashboard() {
     setUserType(user.userType)
     setIsLoading(false)
   }
+  useEffect(() => {
+    setCurrentUser();
+  }, []);
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("fr-MG", {

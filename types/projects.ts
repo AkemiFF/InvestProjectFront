@@ -110,8 +110,8 @@ export interface ProjectCreateData {
     name: string
     role: string
     photo?: File
-    facebook_url?: string
-  }[]
+    facebook_url?: string | null
+  }[] | string
   milestones?: {
     title: string
     description: string
