@@ -49,7 +49,7 @@ export const userService = {
 
   // Utilisons l'endpoint update_profile avec la méthode PATCH comme défini dans le backend
   updateProfile: async (userData: Partial<User>): Promise<User> => {
-    const response = await apiClient.patch<User>("/api/users/me/update_profile/", userData)
+    const response = await apiClient.patch<User>("/api/users/update_profile/", userData)
     return response.data
   },
 
