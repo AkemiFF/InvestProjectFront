@@ -1,4 +1,5 @@
 import { ClientProvider } from '@/components/ClientProvider'
+import { AdminLayoutProvider } from '@/components/layout/AdminLayoutContext'
 import { ThemeProvider } from '@/components/theme-provider'
 import type { Metadata } from 'next'
 import './globals.css'
@@ -22,10 +23,10 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-        >
-          <ClientProvider>
-            {children}
-          </ClientProvider>
+        ><AdminLayoutProvider>
+            <ClientProvider>
+              {children}
+            </ClientProvider></AdminLayoutProvider>
         </ThemeProvider>
       </body>
     </html>
