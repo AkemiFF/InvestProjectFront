@@ -43,8 +43,10 @@ export interface SystemSetting {
 
 export interface UserManagementData {
   user_id: number;
-  action: 'activate' | 'deactivate' | 'verify' | 'make_admin' | 'remove_admin';
+  action: 'activate' | 'deactivate' | 'verify' | 'make_admin' | 'remove_admin' | "update_role";
   reason?: string;
+  role?: string;
+  user_type?: string;
 }
 
 export interface ProjectManagementData {
