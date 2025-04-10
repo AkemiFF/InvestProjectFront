@@ -2,31 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,10 +13,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
 import adminService from "@/services/admin-service"
 import projectsService from "@/services/projects-service"
@@ -56,9 +54,11 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 // Define project status types
-type ProjectStatus = "all" | "pending" | "approved" | "rejected" | "draft"
+type ProjectStatus = "all" | "pending" | "active" | "rejected" | "draft" | "funded"
 
 // Define project interface based on the API response
 interface Project {
@@ -107,7 +107,7 @@ export default function AdminProjectsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   // State for action confirmation
-  const [projectToAction, setProjectToAction] = useState<{ id: number; action: "approve" | "reject" } | null>(null)
+  const [projectToAction, setProjectToAction] = useState<{ id: number; action: "active" | "reject" } | null>(null)
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false)
 
   // State for filters
@@ -165,6 +165,7 @@ export default function AdminProjectsPage() {
 
   const applyFilters = () => {
     let filtered = [...projects]
+    console.log(filtered);
 
     // Apply search filter
     if (searchQuery) {
@@ -255,7 +256,7 @@ export default function AdminProjectsPage() {
     }
   }
 
-  const handleProjectAction = (projectId: number, action: "approve" | "reject") => {
+  const handleProjectAction = (projectId: number, action: "active" | "reject") => {
     setProjectToAction({ id: projectId, action })
     setIsActionDialogOpen(true)
   }
@@ -272,7 +273,7 @@ export default function AdminProjectsPage() {
 
       toast({
         title: "Success",
-        description: `Project has been ${projectToAction.action === "approve" ? "approved" : "rejected"} successfully.`,
+        description: `Project has been ${projectToAction.action === "active" ? "approved" : "rejected"} successfully.`,
       })
 
       fetchProjects() // Refresh the list
@@ -303,7 +304,7 @@ export default function AdminProjectsPage() {
             Pending
           </Badge>
         )
-      case "approved":
+      case "active":
         return (
           <Badge variant="outline" className="bg-green-900/20 text-green-400 border-green-400/30">
             Approved
@@ -392,10 +393,10 @@ export default function AdminProjectsPage() {
                     Pending Approval
                   </TabsTrigger>
                   <TabsTrigger
-                    value="approved"
+                    value="active"
                     className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
                   >
-                    Approved
+                    Active
                   </TabsTrigger>
                   <TabsTrigger
                     value="rejected"
@@ -487,7 +488,7 @@ export default function AdminProjectsPage() {
                   isLoading={isLoading}
                   onViewDetails={handleViewDetails}
                   onDeleteProject={handleDeleteProject}
-                  onApproveProject={(id) => handleProjectAction(id, "approve")}
+                  onApproveProject={(id) => handleProjectAction(id, "active")}
                   onRejectProject={(id) => handleProjectAction(id, "reject")}
                   getStatusBadge={getStatusBadge}
                   formatCurrency={formatCurrency}
@@ -501,7 +502,7 @@ export default function AdminProjectsPage() {
                   isLoading={isLoading}
                   onViewDetails={handleViewDetails}
                   onDeleteProject={handleDeleteProject}
-                  onApproveProject={(id) => handleProjectAction(id, "approve")}
+                  onApproveProject={(id) => handleProjectAction(id, "active")}
                   onRejectProject={(id) => handleProjectAction(id, "reject")}
                   getStatusBadge={getStatusBadge}
                   formatCurrency={formatCurrency}
@@ -516,7 +517,7 @@ export default function AdminProjectsPage() {
                   isLoading={isLoading}
                   onViewDetails={handleViewDetails}
                   onDeleteProject={handleDeleteProject}
-                  onApproveProject={(id) => handleProjectAction(id, "approve")}
+                  onApproveProject={(id) => handleProjectAction(id, "active")}
                   onRejectProject={(id) => handleProjectAction(id, "reject")}
                   getStatusBadge={getStatusBadge}
                   formatCurrency={formatCurrency}
@@ -530,7 +531,7 @@ export default function AdminProjectsPage() {
                   isLoading={isLoading}
                   onViewDetails={handleViewDetails}
                   onDeleteProject={handleDeleteProject}
-                  onApproveProject={(id) => handleProjectAction(id, "approve")}
+                  onApproveProject={(id) => handleProjectAction(id, "active")}
                   onRejectProject={(id) => handleProjectAction(id, "reject")}
                   getStatusBadge={getStatusBadge}
                   formatCurrency={formatCurrency}
@@ -544,7 +545,7 @@ export default function AdminProjectsPage() {
                   isLoading={isLoading}
                   onViewDetails={handleViewDetails}
                   onDeleteProject={handleDeleteProject}
-                  onApproveProject={(id) => handleProjectAction(id, "approve")}
+                  onApproveProject={(id) => handleProjectAction(id, "active")}
                   onRejectProject={(id) => handleProjectAction(id, "reject")}
                   getStatusBadge={getStatusBadge}
                   formatCurrency={formatCurrency}
@@ -654,7 +655,7 @@ export default function AdminProjectsPage() {
                       <Button
                         onClick={() => {
                           setIsDetailModalOpen(false)
-                          handleProjectAction(selectedProject.id, "approve")
+                          handleProjectAction(selectedProject.id, "active")
                         }}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
@@ -748,10 +749,10 @@ export default function AdminProjectsPage() {
         <AlertDialogContent className="bg-slate-900 border-slate-700 text-slate-100">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {projectToAction?.action === "approve" ? "Approve Project" : "Reject Project"}
+              {projectToAction?.action === "active" ? "Approve Project" : "Reject Project"}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-400">
-              {projectToAction?.action === "approve"
+              {projectToAction?.action === "active"
                 ? "This project will be approved and made visible to investors."
                 : "This project will be rejected and the owner will be notified."}
             </AlertDialogDescription>
@@ -763,12 +764,12 @@ export default function AdminProjectsPage() {
             <AlertDialogAction
               onClick={confirmProjectAction}
               className={
-                projectToAction?.action === "approve"
+                projectToAction?.action === "active"
                   ? "bg-green-600 hover:bg-green-700 text-white"
                   : "bg-red-600 hover:bg-red-700 text-white"
               }
             >
-              {projectToAction?.action === "approve" ? "Approve" : "Reject"}
+              {projectToAction?.action === "active" ? "active" : "Reject"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
