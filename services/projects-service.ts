@@ -1,6 +1,6 @@
 // services/projects-service.ts
-import { apiClient } from "../lib/api-client"
 import type { ProjectCreateData, ProjectUpdateData } from "@/types/projects"
+import { apiClient } from "../lib/api-client"
 
 export const projectsService = {
   // Récupération des projets
@@ -87,7 +87,7 @@ export const projectsService = {
   },
 
   deleteProject: (id: number | string) => {
-    return apiClient.delete(`/api/projects/${id}/`)
+    return apiClient.delete(`/api/admin/delete/project/${id}/`)
   },
 
   // Médias (images et documents)

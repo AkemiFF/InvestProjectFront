@@ -19,7 +19,9 @@ const routeConfig = {
     Settings: "/profile"
   },
   admin: {
+    Dashboard: "/admin",
     "User Management": `/${adminName}/users`,
+    "Projects Management": `/${adminName}/projects`,
     Moderation: `/${adminName}/moderation`,
     Support: `/${adminName}/centre-aide`
   },
@@ -63,7 +65,7 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
   const { user, setUserType, updateUser } = useLayoutContext();
 
   useEffect(() => {
-    setUserTp(user.userType)
+    setUserTp(initialUserType)
   }, []);
 
   return (
@@ -87,18 +89,27 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
         )} */}
 
         <nav className="space-y-2">
-          <NavItem
-            icon={Command}
-            label="Dashboard"
-            href={routeConfig.common.Dashboard}
-          />
+          {userType !== "admin" ? (
+            <NavItem
+              icon={Command}
+              label="Dashboard"
+              href={routeConfig.common.Dashboard}
+            />
+          ) : (
+            <NavItem
+              icon={Command}
+              label="Dashboard"
+              href={routeConfig.admin.Dashboard}
+            />
+          )
+          }
 
           {userType === "admin" ? (
             <>
               <NavItem icon={Users} label="User Management" href={routeConfig.admin["User Management"]} />
-              <NavItem icon={Briefcase} label="Projects" href={routeConfig.common.Projects} />
+              <NavItem icon={Briefcase} label="Projects" href={routeConfig.admin["Projects Management"]} />
               <NavItem icon={Shield} label="Moderation" href={routeConfig.admin.Moderation} />
-              <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} />
+              {/* <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} /> */}
               <NavItem icon={MessageSquare} label="Support" href={routeConfig.admin.Support} />
               <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />
             </>
