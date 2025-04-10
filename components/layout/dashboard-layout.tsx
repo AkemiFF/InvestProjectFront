@@ -24,7 +24,6 @@ export function DashboardLayout({ children, userType = "investor" }: DashboardLa
       setIsLoading(false)
     }, 2000)
     // console.log(userType);
-    // console.log(userType);
 
     return () => clearTimeout(timer)
   }, [])

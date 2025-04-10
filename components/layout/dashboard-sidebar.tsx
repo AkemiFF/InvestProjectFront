@@ -19,6 +19,7 @@ const routeConfig = {
     Settings: "/profile"
   },
   admin: {
+    Dashboard: "/admin",
     "User Management": `/${adminName}/users`,
     "Projects Management": `/${adminName}/projects`,
     Moderation: `/${adminName}/moderation`,
@@ -88,11 +89,20 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
         )} */}
 
         <nav className="space-y-2">
-          <NavItem
-            icon={Command}
-            label="Dashboard"
-            href={routeConfig.common.Dashboard}
-          />
+          {userType !== "admin" ? (
+            <NavItem
+              icon={Command}
+              label="Dashboard"
+              href={routeConfig.common.Dashboard}
+            />
+          ) : (
+            <NavItem
+              icon={Command}
+              label="Dashboard"
+              href={routeConfig.admin.Dashboard}
+            />
+          )
+          }
 
           {userType === "admin" ? (
             <>
