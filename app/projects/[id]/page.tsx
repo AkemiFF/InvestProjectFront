@@ -1,6 +1,5 @@
 "use client"
 
-import { Facebook } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,6 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { projectsService } from "@/services/projects-service"
 import type { Project } from "@/types/projects"
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
@@ -37,12 +37,14 @@ import {
   Target,
   ThumbsUp,
   Users,
+  Facebook,
 } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function ProjectDetailPage() {
+  const router = useRouter();
   const params = useParams()
   const projectId = params.id
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
@@ -218,19 +220,11 @@ export default function ProjectDetailPage() {
   }
 
   const handleInvest = () => {
-    setIsLoading(true)
+    if (!investmentAmount || !projectId) return;
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      setShowSuccess(true)
-
-      // Hide success message after 5 seconds
-      setTimeout(() => {
-        setShowSuccess(false)
-      }, 5000)
-    }, 1500)
-  }
+    // Rediriger vers la page de processus de paiement avec les paramètres nécessaires
+    router.push(`/investments/process/${projectId}?amount=${investmentAmount}`);
+  };
 
   if (isLoadingProject) {
     return (
@@ -314,7 +308,7 @@ export default function ProjectDetailPage() {
                   <div>
                     <CardTitle className="text-2xl text-slate-100">{project.title}</CardTitle>
                     <CardDescription className="text-slate-400 flex items-center mt-1">
-                      <MapPin className="h-4 w-4 mr-1 text-slate-500" /> {projectExtendedData.location}
+                      <MapPin className="h-4 w-4 mr-1 text-slate-500" /> {project.location}
                     </CardDescription>
                   </div>
                   <div className="flex space-x-2">
@@ -589,7 +583,7 @@ export default function ProjectDetailPage() {
                           <Calendar className="h-5 w-5 text-cyan-500 mr-2" />
                           <h3 className="text-sm font-medium text-slate-200">Return Timeline</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-100">{projectExtendedData.returnTimeline} months</p>
+                        <p className="text-2xl font-bold text-slate-100">{project.return_timeline} months</p>
                         <p className="text-xs text-slate-500 mt-1">Estimated time to realize returns</p>
                       </div>
 
@@ -654,20 +648,20 @@ export default function ProjectDetailPage() {
                       <div className="flex-shrink-0">
                         <Avatar className="h-20 w-20">
                           <AvatarImage
-                            src={project.owner?.profile_picture || projectExtendedData.owner.image}
-                            alt={project.owner?.username || projectExtendedData.owner.name}
+                            src={project.owner?.profile_picture ?? "/placeholder.svg"}
+                            alt={project.owner?.username}
                           />
                           <AvatarFallback className="bg-slate-700 text-cyan-500">
-                            {(project.owner?.username || projectExtendedData.owner.name).charAt(0)}
+                            {(project.owner?.username).charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                       </div>
                       <div className="flex-1">
                         <h3 className="text-lg font-medium text-slate-100 mb-1">
-                          {project.owner?.username || projectExtendedData.owner.name}
+                          {project.owner?.username}
                         </h3>
                         <p className="text-sm text-slate-400 mb-3">
-                          {project.owner?.biography || projectExtendedData.owner.description}
+                          {project.owner?.biography}
                         </p>
                         <div className="flex items-center space-x-4 text-sm">
                           <div className="flex items-center">
@@ -883,7 +877,7 @@ export default function ProjectDetailPage() {
                       </div>
                     </div>
                     <div className="text-xs text-slate-500">
-                      Estimated return after {projectExtendedData.returnTimeline} months
+                      Estimated return after {project.return_timeline} months
                     </div>
                   </div>
 
@@ -933,7 +927,7 @@ export default function ProjectDetailPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Minimum Investment</span>
                     <span className="text-sm text-slate-300">
-                      {formatCurrency(Number.parseInt(projectExtendedData.minimumInvestment))}
+                      {formatCurrency(Number.parseInt(project.minimum_investment))}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -942,7 +936,7 @@ export default function ProjectDetailPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Return Timeline</span>
-                    <span className="text-sm text-slate-300">{projectExtendedData.returnTimeline} months</span>
+                    <span className="text-sm text-slate-300">{project.return_timeline} months</span>
                   </div>
                 </div>
               </CardContent>
