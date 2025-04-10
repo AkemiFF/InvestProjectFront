@@ -51,7 +51,7 @@ export interface UserManagementData {
 
 export interface ProjectManagementData {
   project_id: number;
-  action: 'approve' | 'reject' | 'feature' | 'unfeature' | 'hide' | 'unhide';
+  action: 'active' | 'reject' | 'feature' | 'unfeature' | 'hide' | 'unhide';
   reason?: string;
 }
 
