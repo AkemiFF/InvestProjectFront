@@ -1,525 +1,462 @@
 "use client"
 
-import { useState } from "react"
-import { Activity, BarChart3, CheckCircle, DollarSign, FileText, Shield, Users, XCircle } from "lucide-react"
+import type React from "react"
+
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MetricCard } from "@/components/dashboard/metric-card"
-import { PerformanceChart } from "@/components/dashboard/performance-chart"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import adminService from "@/services/admin-service"
+import {
+  ArrowRight,
+  ArrowUpRight,
+  BarChart3,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Download,
+  LineChart,
+  RefreshCw,
+  Users,
+  XCircle,
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
-export default function AdminDashboard() {
-  const [totalUsers, setTotalUsers] = useState(245)
-  const [totalProjects, setTotalProjects] = useState(78)
-  const [pendingProjects, setPendingProjects] = useState(12)
-  const [totalRevenue, setTotalRevenue] = useState(45750000)
+// Define interfaces for dashboard data
+interface DashboardMetrics {
+  users: {
+    total: number
+    new_today: number
+    new_yesterday: number
+    new_last_week: number
+    new_last_month: number
+    growth_rate: number
+  }
+  projects: {
+    total: number
+    new_today: number
+    pending: number
+  }
+  investments: {
+    total: number
+    total_amount: number
+    new_today: number
+  }
+  comments: {
+    total: number
+    new_today: number
+    reported: number
+  }
+  revenue: {
+    total: number
+    today: number
+    yesterday: number
+    last_week: number
+    last_month: number
+    growth_rate: number
+  }
+}
 
-  // Format currency
+interface GrowthDataPoint {
+  period: string
+  count: number
+}
+
+export default function AdminDashboardPage() {
+  const router = useRouter()
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
+  const [userGrowth, setUserGrowth] = useState<GrowthDataPoint[]>([])
+  const [revenueData, setRevenueData] = useState<GrowthDataPoint[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [timeframe, setTimeframe] = useState<"day" | "month">("month")
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [timeframe])
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true)
+    try {
+      // Fetch all dashboard data in parallel
+      const [metricsResponse, userGrowthResponse, revenueResponse] = await Promise.all([
+        adminService.getDashboardMetrics(),
+        adminService.getUserGrowthData(timeframe),
+        adminService.getRevenueData(timeframe),
+      ])
+
+      setMetrics(metricsResponse.data)
+      setUserGrowth(userGrowthResponse.data.results)
+      setRevenueData(revenueResponse.data.results)
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("fr-MG", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "MGA",
       maximumFractionDigits: 0,
     }).format(amount)
   }
 
+  const formatDate = (periodString: string) => {
+    // Handle period format like "2025-03" or "2025-04-01"
+    const parts = periodString.split("-")
+    const year = parts[0]
+    const month = parts[1]
+    const day = parts.length > 2 ? parts[2] : null
+
+    if (day) {
+      // If we have a day, it's a daily format
+      return new Date(`${year}-${month}-${day}`).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
+    } else {
+      // If we only have year and month, it's a monthly format
+      return new Date(`${year}-${month}-01`).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    }
+  }
+
   return (
     <DashboardLayout userType="admin">
-      <div className="grid gap-6">
-        {/* Admin Overview */}
-        <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="border-b border-slate-700/50 pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-slate-100 flex items-center">
-                <Activity className="mr-2 h-5 w-5 text-cyan-500" />
-                Platform Overview
-              </CardTitle>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="bg-slate-800/50 text-cyan-400 border-cyan-500/50 text-xs">
-                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-500 mr-1 animate-pulse"></div>
-                  LIVE
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <MetricCard
-                title="Total Users"
-                value={totalUsers}
-                icon={Users}
-                trend="up"
-                color="cyan"
-                detail="45 new this month"
-              />
-              <MetricCard
-                title="Total Projects"
-                value={totalProjects}
-                icon={FileText}
-                trend="up"
-                color="blue"
-                detail="12 pending approval"
-              />
-              <MetricCard
-                title="Platform Revenue"
-                value={formatCurrency(totalRevenue)}
-                icon={DollarSign}
-                trend="up"
-                color="green"
-                detail="From commissions & fees"
-              />
-              <MetricCard
-                title="Premium Users"
-                value="32%"
-                icon={Shield}
-                trend="stable"
-                color="purple"
-                detail="78 premium accounts"
-              />
-            </div>
-
-            <div className="mt-8">
-              <Tabs defaultValue="statistics" className="w-full">
-                <div className="flex items-center justify-between mb-4">
-                  <TabsList className="bg-slate-800/50 p-1">
-                    <TabsTrigger
-                      value="statistics"
-                      className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
-                    >
-                      Statistics
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="users"
-                      className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
-                    >
-                      Users
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="projects"
-                      className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
-                    >
-                      Projects
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <div className="flex items-center space-x-2 text-xs text-slate-400">
-                    <div className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-cyan-500 mr-1"></div>
-                      Users
-                    </div>
-                    <div className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-purple-500 mr-1"></div>
-                      Revenue
-                    </div>
-                  </div>
-                </div>
-
-                <TabsContent value="statistics" className="mt-0">
-                  <div className="h-64 w-full relative bg-slate-800/30 rounded-lg border border-slate-700/50 overflow-hidden">
-                    <PerformanceChart />
-                    <div className="absolute bottom-4 right-4 bg-slate-900/80 backdrop-blur-sm rounded-md px-3 py-2 border border-slate-700/50">
-                      <div className="text-xs text-slate-400">Growth Rate</div>
-                      <div className="text-lg font-mono text-cyan-400">+24.8%</div>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="users" className="mt-0">
-                  <div className="bg-slate-800/30 rounded-lg border border-slate-700/50 overflow-hidden">
-                    <div className="grid grid-cols-12 text-xs text-slate-400 p-3 border-b border-slate-700/50 bg-slate-800/50">
-                      <div className="col-span-3">User</div>
-                      <div className="col-span-2">Type</div>
-                      <div className="col-span-2">Joined</div>
-                      <div className="col-span-2">Status</div>
-                      <div className="col-span-3">Actions</div>
-                    </div>
-
-                    <div className="divide-y divide-slate-700/30">
-                      <UserRow
-                        name="Jean Dupont"
-                        email="jean@example.com"
-                        type="Investor"
-                        joined="2023-10-15"
-                        status="active"
-                      />
-                      <UserRow
-                        name="Marie Laurent"
-                        email="marie@example.com"
-                        type="Project Owner"
-                        joined="2023-11-02"
-                        status="active"
-                      />
-                      <UserRow
-                        name="Ahmed Nasser"
-                        email="ahmed@example.com"
-                        type="Investor"
-                        joined="2023-11-10"
-                        status="premium"
-                      />
-                      <UserRow
-                        name="Sophie Martin"
-                        email="sophie@example.com"
-                        type="Project Owner"
-                        joined="2023-09-28"
-                        status="premium"
-                      />
-                      <UserRow
-                        name="Thomas Dubois"
-                        email="thomas@example.com"
-                        type="Investor"
-                        joined="2023-11-15"
-                        status="pending"
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="projects" className="mt-0">
-                  <div className="bg-slate-800/30 rounded-lg border border-slate-700/50 overflow-hidden">
-                    <div className="grid grid-cols-12 text-xs text-slate-400 p-3 border-b border-slate-700/50 bg-slate-800/50">
-                      <div className="col-span-3">Project</div>
-                      <div className="col-span-2">Owner</div>
-                      <div className="col-span-2">Sector</div>
-                      <div className="col-span-2">Target</div>
-                      <div className="col-span-3">Actions</div>
-                    </div>
-
-                    <div className="divide-y divide-slate-700/30">
-                      <ProjectRow
-                        name="Sustainable Aquaculture Farm"
-                        owner="Marie Laurent"
-                        sector="Agriculture"
-                        target={15000000}
-                        status="pending"
-                      />
-                      <ProjectRow
-                        name="AI-Powered Healthcare Assistant"
-                        owner="Ahmed Nasser"
-                        sector="Technology"
-                        target={8000000}
-                        status="approved"
-                      />
-                      <ProjectRow
-                        name="Solar Panel Manufacturing"
-                        owner="Sophie Martin"
-                        sector="Green Energy"
-                        target={25000000}
-                        status="pending"
-                      />
-                      <ProjectRow
-                        name="Educational Platform"
-                        owner="Jean Dupont"
-                        sector="Education"
-                        target={3200000}
-                        status="approved"
-                      />
-                      <ProjectRow
-                        name="Urban Farming Initiative"
-                        owner="Thomas Dubois"
-                        sector="Agriculture"
-                        target={12000000}
-                        status="rejected"
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pending Approvals */}
-        <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-slate-100 flex items-center text-base">
-                <Shield className="mr-2 h-5 w-5 text-amber-500" />
-                Pending Approvals
-              </CardTitle>
-              <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30">
-                {pendingProjects} Projects
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <PendingProjectCard
-                title="Sustainable Aquaculture Farm"
-                owner="Marie Laurent"
-                sector="Agriculture"
-                target={15000000}
-                description="A sustainable aquaculture farm using innovative recirculating systems to produce fish with minimal environmental impact."
-              />
-              <PendingProjectCard
-                title="Solar Panel Manufacturing"
-                owner="Sophie Martin"
-                sector="Green Energy"
-                target={25000000}
-                description="Manufacturing facility for high-efficiency solar panels using locally sourced materials and creating jobs in the region."
-              />
-              <PendingProjectCard
-                title="Mobile Banking Solution"
-                owner="Thomas Dubois"
-                sector="Finance"
-                target={18000000}
-                description="A mobile banking platform designed for rural communities with limited access to traditional banking services."
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="border-t border-slate-700/50 pt-4 flex justify-center">
-            <Button variant="outline" className="border-slate-700 text-slate-400 hover:text-slate-100">
-              View All Pending Approvals
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-100">Admin Dashboard</h1>
+            <p className="text-slate-400">Overview of platform metrics and performance</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={timeframe} onValueChange={(value: "day" | "month") => setTimeframe(value)}>
+              <SelectTrigger className="w-[180px] bg-slate-800/50 border-slate-700 text-slate-100">
+                <SelectValue placeholder="Select timeframe" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-slate-700 text-slate-100">
+                <SelectItem value="day">Daily</SelectItem>
+                <SelectItem value="month">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={fetchDashboardData}
+              variant="outline"
+              className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
             </Button>
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
 
-        {/* Platform Analytics */}
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            title="Total Users"
+            value={metrics?.users.total}
+            icon={<Users className="h-5 w-5 text-blue-400" />}
+            change={metrics?.users.new_today}
+            isLoading={isLoading}
+            gradient="from-blue-600 to-indigo-600"
+          />
+
+          <MetricCard
+            title="Total Projects"
+            value={metrics?.projects.total}
+            icon={<BarChart3 className="h-5 w-5 text-cyan-400" />}
+            change={metrics?.projects.new_today}
+            isLoading={isLoading}
+            gradient="from-cyan-600 to-teal-600"
+          />
+
+          <MetricCard
+            title="Total Investments"
+            value={metrics?.investments.total}
+            icon={<LineChart className="h-5 w-5 text-green-400" />}
+            change={metrics?.investments.new_today}
+            isLoading={isLoading}
+            gradient="from-green-600 to-emerald-600"
+          />
+
+          <MetricCard
+            title="Total Revenue"
+            value={metrics?.revenue.total}
+            icon={<DollarSign className="h-5 w-5 text-amber-400" />}
+            change={metrics?.revenue.today}
+            isLoading={isLoading}
+            isCurrency={true}
+            gradient="from-amber-600 to-orange-600"
+          />
+        </div>
+
+        {/* Charts and Tables */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* User Growth Chart */}
+          <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-slate-100">User Growth</CardTitle>
+              <CardDescription className="text-slate-400">New user registrations over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-[300px] w-full bg-slate-800" />
+              ) : userGrowth?.length > 0 ? (
+                <div className="h-[300px] w-full">
+                  {/* Chart would go here - using a placeholder for now */}
+                  <div className="h-full w-full bg-slate-800/50 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <LineChart className="h-10 w-10 text-cyan-500 mx-auto mb-2" />
+                      <p className="text-slate-300">User Growth Chart</p>
+                      <p className="text-sm text-slate-400">
+                        {userGrowth.length} data points from {formatDate(userGrowth[0].period)} to{" "}
+                        {formatDate(userGrowth[userGrowth.length - 1].period)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[300px] w-full flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-slate-400">No data available</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Revenue Chart */}
+          <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-slate-100">Revenue</CardTitle>
+              <CardDescription className="text-slate-400">Platform revenue over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-[300px] w-full bg-slate-800" />
+              ) : revenueData?.length > 0 ? (
+                <div className="h-[300px] w-full">
+                  {/* Chart would go here - using a placeholder for now */}
+                  <div className="h-full w-full bg-slate-800/50 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <BarChart3 className="h-10 w-10 text-green-500 mx-auto mb-2" />
+                      <p className="text-slate-300">Revenue Chart</p>
+                      <p className="text-sm text-slate-400">
+                        {revenueData.length} data points from {formatDate(revenueData[0].period)} to{" "}
+                        {formatDate(revenueData[revenueData.length - 1].period)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[300px] w-full flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-slate-400">No data available</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Projects Requiring Attention */}
         <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-slate-100 flex items-center text-base">
-              <BarChart3 className="mr-2 h-5 w-5 text-blue-500" />
-              Platform Analytics
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="text-slate-100">Projects Requiring Attention</CardTitle>
+            <CardDescription className="text-slate-400">
+              Projects pending approval or requiring moderation
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-sm text-slate-400">User Growth</div>
-                  <div className="text-xs text-cyan-400">+24% this month</div>
-                </div>
-                <Progress value={24} className="h-2 bg-slate-700">
-                  <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full" />
-                </Progress>
-              </div>
+            <Tabs defaultValue="pending" className="w-full">
+              <TabsList className="bg-slate-800/50 p-1 mb-4">
+                <TabsTrigger
+                  value="pending"
+                  className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
+                >
+                  Pending Approval ({metrics?.projects.pending || 0})
+                </TabsTrigger>
+                <TabsTrigger
+                  value="reported"
+                  className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
+                >
+                  Reported Projects
+                </TabsTrigger>
+              </TabsList>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-sm text-slate-400">Project Success Rate</div>
-                  <div className="text-xs text-green-400">72%</div>
-                </div>
-                <Progress value={72} className="h-2 bg-slate-700">
-                  <div className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full" />
-                </Progress>
-              </div>
+              <TabsContent value="pending">
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <Skeleton key={index} className="h-16 w-full bg-slate-800" />
+                    ))}
+                  </div>
+                ) : metrics?.projects.pending ? (
+                  <div className="space-y-3">
+                    {/* This would be populated with actual pending projects */}
+                    <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-cyan-900/30 flex items-center justify-center">
+                          <Clock className="h-5 w-5 text-cyan-400" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-slate-200">Project Name Example</h4>
+                          <p className="text-sm text-slate-400">Submitted 2 days ago</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Approve
+                        </Button>
+                        <Button size="sm" variant="destructive">
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Reject
+                        </Button>
+                      </div>
+                    </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-sm text-slate-400">Premium Conversion</div>
-                  <div className="text-xs text-purple-400">32%</div>
-                </div>
-                <Progress value={32} className="h-2 bg-slate-700">
-                  <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
-                </Progress>
-              </div>
+                    <div className="flex justify-end mt-4">
+                      <Button
+                        onClick={() => router.push("/admin/projects?status=pending")}
+                        variant="outline"
+                        className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                      >
+                        View All Pending Projects
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-10">
+                    <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-slate-300">No pending projects</h3>
+                    <p className="text-slate-400 mt-1">All projects have been reviewed</p>
+                  </div>
+                )}
+              </TabsContent>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-sm text-slate-400">Average Investment</div>
-                  <div className="text-xs text-blue-400">{formatCurrency(2500000)}</div>
+              <TabsContent value="reported">
+                <div className="text-center py-10">
+                  <p className="text-slate-400">No reported projects at this time</p>
                 </div>
-                <Progress value={65} className="h-2 bg-slate-700">
-                  <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" />
-                </Progress>
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <QuickActionCard
+            title="Manage Users"
+            description="View and manage user accounts"
+            icon={<Users className="h-5 w-5" />}
+            onClick={() => router.push("/admin/users")}
+          />
+
+          <QuickActionCard
+            title="Manage Projects"
+            description="Review and moderate projects"
+            icon={<BarChart3 className="h-5 w-5" />}
+            onClick={() => router.push("/admin/projects")}
+          />
+
+          <QuickActionCard
+            title="Export Reports"
+            description="Download platform analytics"
+            icon={<Download className="h-5 w-5" />}
+            onClick={() => {
+              /* Handle export */
+            }}
+          />
+        </div>
       </div>
     </DashboardLayout>
   )
 }
 
-// User row component
-function UserRow({
-  name,
-  email,
-  type,
-  joined,
-  status,
-}: {
-  name: string
-  email: string
-  type: string
-  joined: string
-  status: "active" | "premium" | "pending" | "suspended"
-}) {
-  return (
-    <div className="grid grid-cols-12 py-2 px-3 text-sm hover:bg-slate-800/50 items-center">
-      <div className="col-span-3 flex items-center space-x-2">
-        <Avatar className="h-6 w-6">
-          <AvatarImage src="/placeholder.svg?height=24&width=24" alt={name} />
-          <AvatarFallback className="bg-slate-700 text-cyan-500 text-xs">{name.charAt(0)}</AvatarFallback>
-        </Avatar>
-        <div>
-          <div className="text-slate-300">{name}</div>
-          <div className="text-xs text-slate-500">{email}</div>
-        </div>
-      </div>
-      <div className="col-span-2 text-slate-400">{type}</div>
-      <div className="col-span-2 text-slate-400">{joined}</div>
-      <div className="col-span-2">
-        <Badge
-          variant="outline"
-          className={`${
-            status === "premium"
-              ? "bg-purple-500/10 text-purple-400 border-purple-500/30"
-              : status === "active"
-                ? "bg-green-500/10 text-green-400 border-green-500/30"
-                : status === "pending"
-                  ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                  : "bg-red-500/10 text-red-400 border-red-500/30"
-          } text-xs`}
-        >
-          {status}
-        </Badge>
-      </div>
-      <div className="col-span-3 flex space-x-2">
-        <Button variant="outline" size="sm" className="h-7 text-xs border-slate-700 bg-slate-800/50">
-          View
-        </Button>
-        <Button variant="outline" size="sm" className="h-7 text-xs border-slate-700 bg-slate-800/50">
-          Edit
-        </Button>
-        {status !== "suspended" ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs border-red-700/30 text-red-400 bg-red-900/10 hover:bg-red-900/20"
-          >
-            Suspend
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs border-green-700/30 text-green-400 bg-green-900/10 hover:bg-green-900/20"
-          >
-            Activate
-          </Button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// Project row component
-function ProjectRow({
-  name,
-  owner,
-  sector,
-  target,
-  status,
-}: {
-  name: string
-  owner: string
-  sector: string
-  target: number
-  status: "pending" | "approved" | "rejected"
-}) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("fr-MG", {
-      style: "currency",
-      currency: "MGA",
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  return (
-    <div className="grid grid-cols-12 py-2 px-3 text-sm hover:bg-slate-800/50 items-center">
-      <div className="col-span-3 text-slate-300">{name}</div>
-      <div className="col-span-2 text-slate-400">{owner}</div>
-      <div className="col-span-2 text-slate-400">{sector}</div>
-      <div className="col-span-2 text-cyan-400">{formatCurrency(target)}</div>
-      <div className="col-span-3 flex space-x-2">
-        <Button variant="outline" size="sm" className="h-7 text-xs border-slate-700 bg-slate-800/50">
-          View
-        </Button>
-        {status === "pending" ? (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs border-green-700/30 text-green-400 bg-green-900/10 hover:bg-green-900/20"
-            >
-              Approve
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs border-red-700/30 text-red-400 bg-red-900/10 hover:bg-red-900/20"
-            >
-              Reject
-            </Button>
-          </>
-        ) : (
-          <Badge
-            variant="outline"
-            className={`${
-              status === "approved"
-                ? "bg-green-500/10 text-green-400 border-green-500/30"
-                : "bg-red-500/10 text-red-400 border-red-500/30"
-            } text-xs`}
-          >
-            {status}
-          </Badge>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// Pending project card component
-function PendingProjectCard({
-  title,
-  owner,
-  sector,
-  target,
-  description,
-}: {
+// Metric Card Component
+interface MetricCardProps {
   title: string
-  owner: string
-  sector: string
-  target: number
-  description: string
-}) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("fr-MG", {
-      style: "currency",
-      currency: "MGA",
-      maximumFractionDigits: 0,
-    }).format(amount)
+  value?: number
+  icon: React.ReactNode
+  change?: number
+  isLoading: boolean
+  isCurrency?: boolean
+  gradient: string
+}
+
+function MetricCard({ title, value, icon, change, isLoading, isCurrency = false, gradient }: MetricCardProps) {
+  const formatValue = (val?: number) => {
+    if (val === undefined) return "-"
+
+    if (isCurrency) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "MGA",
+        maximumFractionDigits: 0,
+      }).format(val)
+    }
+
+    return new Intl.NumberFormat("en-US").format(val)
   }
 
   return (
-    <div className="bg-slate-800/30 rounded-lg border border-amber-500/20 p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-base font-medium text-slate-200">{title}</div>
-        <Badge variant="outline" className="bg-slate-700/50 text-slate-300 border-slate-600/50 text-xs">
-          {sector}
-        </Badge>
-      </div>
-      <div className="mb-3 text-xs text-slate-400">
-        <span className="text-slate-500">Owner:</span> {owner} | <span className="text-slate-500">Target:</span>{" "}
-        {formatCurrency(target)}
-      </div>
-      <div className="mb-3 text-sm text-slate-300">{description}</div>
-      <div className="flex space-x-2">
-        <Button variant="outline" size="sm" className="h-8 text-xs border-slate-700 bg-slate-800/50">
-          View Details
-        </Button>
-        <Button className="h-8 text-xs bg-green-600 hover:bg-green-700">
-          <CheckCircle className="mr-1 h-3 w-3" /> Approve
-        </Button>
-        <Button variant="destructive" size="sm" className="h-8 text-xs">
-          <XCircle className="mr-1 h-3 w-3" /> Reject
-        </Button>
-      </div>
-    </div>
+    <Card className={`bg-slate-900/50 border-slate-700/50 backdrop-blur-sm overflow-hidden relative`}>
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-10 rounded-lg`}></div>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-medium text-slate-400">{title}</p>
+          <div className="h-8 w-8 rounded-full bg-slate-800/80 flex items-center justify-center">{icon}</div>
+        </div>
+
+        {isLoading ? (
+          <Skeleton className="h-8 w-24 bg-slate-800" />
+        ) : (
+          <div className="space-y-1">
+            <h3 className="text-2xl font-bold text-slate-100">{formatValue(value)}</h3>
+            {change !== undefined && (
+              <p className="text-xs flex items-center text-green-400">
+                <ArrowUpRight className="mr-1 h-3 w-3" />
+                {change} new today
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
+// Quick Action Card Component
+interface QuickActionCardProps {
+  title: string
+  description: string
+  icon: React.ReactNode
+  onClick: () => void
+}
+
+function QuickActionCard({ title, description, icon, onClick }: QuickActionCardProps) {
+  return (
+    <Card
+      className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm hover:bg-slate-800/50 transition-colors cursor-pointer"
+      onClick={onClick}
+    >
+      <CardContent className="p-6 flex items-center gap-4">
+        <div className="h-10 w-10 rounded-full bg-cyan-900/20 flex items-center justify-center">
+          <div className="text-cyan-400">{icon}</div>
+        </div>
+        <div>
+          <h3 className="font-medium text-slate-200">{title}</h3>
+          <p className="text-sm text-slate-400">{description}</p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

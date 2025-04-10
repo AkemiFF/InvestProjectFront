@@ -25,7 +25,7 @@ const createApiInstance = (role: UserRole = "user") => {
     async (error) => {
       if (error.response?.status === 401) {
         localStorage.removeItem(role === "admin" ? "admin_auth" : "auth");
-        window.location.href = role === "admin" ? "/admin/login" : "/auth/login";
+        window.location.href = role === "admin" ? "/auth/login/forgot" : "/auth/login";
       }
       return Promise.reject(error);
     }
