@@ -66,6 +66,7 @@ export interface Project {
   tags?: string[]
   risks?: string
   use_of_funds?: string
+  return_timeline?: string
 }
 
 export interface ProjectImage {
