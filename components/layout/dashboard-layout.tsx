@@ -23,6 +23,8 @@ export function DashboardLayout({ children, userType = "investor" }: DashboardLa
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 2000)
+    // console.log(userType);
+    // console.log(userType);
 
     return () => clearTimeout(timer)
   }, [])

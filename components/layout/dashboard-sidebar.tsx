@@ -20,6 +20,7 @@ const routeConfig = {
   },
   admin: {
     "User Management": `/${adminName}/users`,
+    "Projects Management": `/${adminName}/projects`,
     Moderation: `/${adminName}/moderation`,
     Support: `/${adminName}/centre-aide`
   },
@@ -63,7 +64,7 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
   const { user, setUserType, updateUser } = useLayoutContext();
 
   useEffect(() => {
-    setUserTp(user.userType)
+    setUserTp(initialUserType)
   }, []);
 
   return (
@@ -96,9 +97,9 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
           {userType === "admin" ? (
             <>
               <NavItem icon={Users} label="User Management" href={routeConfig.admin["User Management"]} />
-              <NavItem icon={Briefcase} label="Projects" href={routeConfig.common.Projects} />
+              <NavItem icon={Briefcase} label="Projects" href={routeConfig.admin["Projects Management"]} />
               <NavItem icon={Shield} label="Moderation" href={routeConfig.admin.Moderation} />
-              <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} />
+              {/* <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} /> */}
               <NavItem icon={MessageSquare} label="Support" href={routeConfig.admin.Support} />
               <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />
             </>
