@@ -1,7 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,8 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Pagination,
   PaginationContent,
@@ -23,11 +19,15 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import adminService from "@/services/admin-service"
 import type { CommentModerationData } from "@/types/admin"
-import { AlertTriangle, CheckCircle, MessageSquare, RefreshCw, Shield, ThumbsDown, User, XCircle } from "lucide-react"
 import { format } from "date-fns"
+import { AlertTriangle, CheckCircle, MessageSquare, RefreshCw, Shield, ThumbsDown, User, XCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 interface Comment {
   id: number
@@ -123,9 +123,8 @@ export default function AdminModerationPage() {
 
       toast({
         title: "Commentaire modéré",
-        description: `Le commentaire a été ${
-          moderationAction === "approve" ? "approuvé" : moderationAction === "reject" ? "rejeté" : "masqué"
-        } avec succès.`,
+        description: `Le commentaire a été ${moderationAction === "approve" ? "approuvé" : moderationAction === "reject" ? "rejeté" : "masqué"
+          } avec succès.`,
         variant: "default",
       })
 

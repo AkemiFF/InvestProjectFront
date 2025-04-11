@@ -23,7 +23,8 @@ const routeConfig = {
     "Projects Management": `/${adminName}/projects`,
     Moderation: `/${adminName}/moderation`,
     Logs: `/${adminName}/logs`,
-    Support: `/${adminName}/centre-aide`
+    Support: `/${adminName}/centre-aide`,
+    Settings: `/${adminName}/settings`
   },
   user: {
     Network: "/contacts",
@@ -110,7 +111,7 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
               <NavItem icon={Shield} label="Moderation" href={routeConfig.admin.Moderation} />
               <NavItem icon={Logs} label="Logs" href={routeConfig.admin.Logs} />
               <NavItem icon={MessageSquare} label="Support" href={routeConfig.admin.Support} />
-              <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />
+              <NavItem icon={Settings} label="Settings" href={routeConfig.admin.Settings} />
             </>
           ) : (
             <>
