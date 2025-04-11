@@ -22,8 +22,8 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react"
-import { walletService } from "@/services/wallet-service"
-import type { Investment, Transaction } from "@/services/wallet-service"
+import { walletService } from "@/services/wallet-service1"
+import type { Investment, Transaction } from "@/services/wallet-service1"
 
 export default function InvestmentDashboardPage() {
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
@@ -300,11 +300,10 @@ export default function InvestmentDashboardPage() {
                                   <div className="flex items-center space-x-2">
                                     <Progress value={investment.progress} className="h-1.5 w-24 bg-slate-700">
                                       <div
-                                        className={`h-full rounded-full ${
-                                          investment.status === "completed"
+                                        className={`h-full rounded-full ${investment.status === "completed"
                                             ? "bg-green-500"
                                             : "bg-gradient-to-r from-cyan-500 to-blue-500"
-                                        }`}
+                                          }`}
                                         style={{ width: `${investment.progress}%` }}
                                       />
                                     </Progress>
