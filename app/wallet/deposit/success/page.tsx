@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft, Check, Info } from "lucide-react"
-import { walletService } from "@/services/wallet-service"
+import { walletService } from "@/services/wallet-service1"
 
 export default function DepositSuccessPage() {
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
