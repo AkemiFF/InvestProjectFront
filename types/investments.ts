@@ -28,8 +28,11 @@ export interface Transaction {
 export interface InvestmentCreateData {
   project_id: number;
   amount: number;
+  payment_method?: string;
   payment_method_id?: number;
   message?: string;
+  payment_intent_id?: string;
+  project?: any;
 }
 
 export interface InvestmentStats {

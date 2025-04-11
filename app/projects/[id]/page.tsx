@@ -13,7 +13,6 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { projectsService } from "@/services/projects-service"
 import type { Project } from "@/types/projects"
-import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
@@ -25,6 +24,7 @@ import {
   DollarSign,
   Download,
   ExternalLink,
+  Facebook,
   FileText,
   Heart,
   HelpCircle,
@@ -37,10 +37,9 @@ import {
   Target,
   ThumbsUp,
   Users,
-  Facebook,
 } from "lucide-react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function ProjectDetailPage() {
@@ -223,7 +222,7 @@ export default function ProjectDetailPage() {
     if (!investmentAmount || !projectId) return;
 
     // Rediriger vers la page de processus de paiement avec les paramètres nécessaires
-    router.push(`/investments/process/${projectId}?amount=${investmentAmount}`);
+    router.push(`/projects/${projectId}/invest?amount=${investmentAmount}`);
   };
 
   if (isLoadingProject) {
