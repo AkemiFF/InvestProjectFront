@@ -53,6 +53,7 @@ export default function ProjectDetailPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorMontant, setErrorMontant] = useState<string | null>(null)
 
   // Fetch project data
   useEffect(() => {
@@ -150,7 +151,7 @@ export default function ProjectDetailPage() {
         completed: false,
       },
     ],
-    updates: [
+    update: [
       {
         date: "2023-11-10",
         title: "Beta Testing Results",
@@ -387,10 +388,10 @@ export default function ProjectDetailPage() {
                   Team
                 </TabsTrigger>
                 <TabsTrigger
-                  value="updates"
+                  value="update_project"
                   className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
                 >
-                  Updates
+                  Update
                 </TabsTrigger>
                 <TabsTrigger
                   value="comments"
@@ -718,14 +719,14 @@ export default function ProjectDetailPage() {
 
               </TabsContent>
 
-              <TabsContent value="updates" className="space-y-6">
+              <TabsContent value="update_project" className="space-y-6">
                 <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Project Updates</CardTitle>
+                    <CardTitle className="text-slate-100 text-lg">Project update</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {projectExtendedData.updates.map((update, index) => (
+                      {project.update_project.map((update, index) => (
                         <div key={index} className="bg-slate-800/50 rounded-md p-4 border border-slate-700/50">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-sm font-medium text-slate-200">{update.title}</h4>
@@ -805,35 +806,43 @@ export default function ProjectDetailPage() {
                     </Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                      <Input
-                        id="investmentAmount"
-                        type="number"
-                        placeholder={project.minimum_investment}
-                        className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
-                        value={investmentAmount}
-                        onChange={(e) => {
-                          // Permet de taper n'importe quelle valeur temporairement
-                          setInvestmentAmount(e.target.value);
-                        }}
-                        onBlur={() => {
-                          const value = Number(investmentAmount);
-                          const min = Number(project.minimum_investment);
-                          const max = Number(project.maximum_investment);
+                      <div className="space-y-2"> {/* Conteneur avec espacement */}
+                        <Input
+                          id="investmentAmount"
+                          type="number"
+                          placeholder={project.minimum_investment}
+                          className={`pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 ${error && "border-red-500"
+                            }`}
+                          value={investmentAmount}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setInvestmentAmount(value);
+                            setErrorMontant(""); // Réinitialise l'erreur à chaque modification
+                          }}
+                          onBlur={() => {
+                            const numericValue = Number(investmentAmount);
+                            const min = Number(project.minimum_investment);
+                            const max = Number(project.maximum_investment);
 
-                          // Si la valeur n'est pas un nombre valide, on réinitialise au minimum
-                          if (isNaN(value)) {
-                            setInvestmentAmount(min.toString());
-                            return;
-                          }
+                            if (investmentAmount === "") {
+                              setErrorMontant("Veuillez saisir un montant");
+                            } else if (isNaN(numericValue)) {
+                              setErrorMontant("Montant invalide");
+                            } else if (numericValue < min) {
+                              setErrorMontant(`Le montant minimum est ${formatCurrency(min)}`);
+                            } else if (numericValue > max) {
+                              setErrorMontant(`Le montant maximum est ${formatCurrency(max)}`);
+                            }
+                          }}
+                        />
 
-                          // Ajuste la valeur si elle est en dehors des limites
-                          if (value < min) {
-                            setInvestmentAmount(min.toString());
-                          } else if (value > max) {
-                            setInvestmentAmount(max.toString());
-                          }
-                        }}
-                      />
+                        {/* Message d'erreur positionné en dessous */}
+                        {errorMontant && (
+                          <p className="text-sm text-red-500 mt-1"> {/* marge-top de 4px */}
+                            {errorMontant}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">
