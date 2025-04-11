@@ -812,22 +812,35 @@ export default function ProjectDetailPage() {
                         className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
                         value={investmentAmount}
                         onChange={(e) => {
-                          // Permet de taper n'importe quelle valeur temporairement
-                          setInvestmentAmount(e.target.value);
+                          const inputValue = e.target.value;
+
+                          // Permet de vider le champ ou de taper un nouveau nombre
+                          if (inputValue === '') {
+                            setInvestmentAmount('');
+                            return;
+                          }
+
+                          const numericValue = Number(inputValue);
+                          const max = Number(project.maximum_investment);
+
+                          // Bloque la saisie si le nombre dépasse le max
+                          if (!isNaN(numericValue) && numericValue <= max) {
+                            setInvestmentAmount(inputValue);
+                          }
                         }}
                         onBlur={() => {
                           const value = Number(investmentAmount);
                           const min = Number(project.minimum_investment);
                           const max = Number(project.maximum_investment);
 
-                          // Si la valeur n'est pas un nombre valide, on réinitialise au minimum
-                          if (isNaN(value)) {
+                          if (investmentAmount === '') {
                             setInvestmentAmount(min.toString());
                             return;
                           }
 
-                          // Ajuste la valeur si elle est en dehors des limites
-                          if (value < min) {
+                          if (isNaN(value)) {
+                            setInvestmentAmount(min.toString());
+                          } else if (value < min) {
                             setInvestmentAmount(min.toString());
                           } else if (value > max) {
                             setInvestmentAmount(max.toString());
