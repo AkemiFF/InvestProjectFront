@@ -58,6 +58,10 @@ export const paymentService = {
     })
     return data.data
   },
+  checkSessionStatus: async (sessionId: string) => {
+    const { data } = await apiClient.get<ApiResponse<StripePaymentSession>>(`/api/payments/session-status/${sessionId}/`)
+    return data.data
+  },
 
   // Confirmer un paiement
   confirmPayment: async (paymentIntentId: string) => {

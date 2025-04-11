@@ -1,16 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useParams, useSearchParams } from "next/navigation"
-import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
-import { paymentService } from "@/services/payment-service"
 import { investmentsService } from "@/services/investments-service"
+import { paymentService } from "@/services/payment-service"
+
 import { ArrowLeft, Check, ChevronRight, Loader2 } from "lucide-react"
+import Link from "next/link"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function InvestmentSuccessPage() {
   const router = useRouter()
@@ -34,6 +35,7 @@ export default function InvestmentSuccessPage() {
       try {
         // 1. Vérifier le statut de la session de paiement
         const sessionStatus = await paymentService.checkSessionStatus(sessionId)
+        console.log(sessionStatus);
 
         if (sessionStatus.status !== "complete") {
           setError("Le paiement n'a pas été complété. Veuillez réessayer.")
@@ -44,13 +46,15 @@ export default function InvestmentSuccessPage() {
         // 2. Créer l'investissement avec les détails de la session
         const investmentData = {
           project: projectId as string,
+          project_id: projectId as unknown as number,
           amount: sessionStatus.amount / 100, // Convertir les centimes en unités
           payment_method: "bank",
           payment_session_id: sessionId,
         }
 
         const investment = await investmentsService.createInvestment(investmentData)
-        setInvestmentDetails(investment)
+        console.log("Investment created:", investment)
+        setInvestmentDetails(investment.data)
 
         toast({
           title: "Investissement réussi",

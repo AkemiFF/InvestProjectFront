@@ -2,28 +2,25 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { useRouter, useParams, useSearchParams } from "next/navigation"
-import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { StripeCardElement } from "@/components/payment/stripe-card-element"
+import { StripeProvider } from "@/components/payment/stripe-provider"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
 import { toast } from "@/components/ui/use-toast"
-import { StripeProvider } from "@/components/payment/stripe-provider"
-import { StripeCardElement } from "@/components/payment/stripe-card-element"
-import { projectsService } from "@/services/projects-service"
 import { investmentsService } from "@/services/investments-service"
 import { paymentService } from "@/services/payment-service"
-import type { Project } from "@/types/projects"
+import { projectsService } from "@/services/projects-service"
 import type { InvestmentCreateData } from "@/types/investments"
+import type { Project } from "@/types/projects"
 import {
   AlertCircle,
   ArrowLeft,
@@ -46,6 +43,9 @@ import {
   Timer,
   Wallet,
 } from "lucide-react"
+import Link from "next/link"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function InvestmentProcessPage() {
   const router = useRouter()
@@ -252,6 +252,7 @@ export default function InvestmentProcessPage() {
       // Créer l'investissement
       const investmentData: InvestmentCreateData = {
         project: projectId as string,
+        project_id: projectId as unknown as number,
         amount: Number(formData.amount),
         payment_method: formData.paymentMethod,
       }
@@ -366,13 +367,12 @@ export default function InvestmentProcessPage() {
                         {[1, 2, 3, 4].map((step) => (
                           <div
                             key={step}
-                            className={`h-6 w-6 rounded-full flex items-center justify-center ${
-                              step < currentStep
+                            className={`h-6 w-6 rounded-full flex items-center justify-center ${step < currentStep
                                 ? "bg-cyan-500 text-black"
                                 : step === currentStep
                                   ? "bg-cyan-900 border-2 border-cyan-500 text-cyan-500"
                                   : "bg-slate-800 text-slate-500"
-                            }`}
+                              }`}
                           >
                             {step < currentStep ? (
                               <Check className="h-3 w-3" />
