@@ -113,7 +113,7 @@ class WalletService {
   }
 
   async getTransactions(params?: { page?: number; limit?: number; type?: string }): Promise<TransactionsResponse> {
-    const response = await apiClient.get("/api/transactions/", { params })
+    const response = await apiClient.get("/api/wallet/wallets/transactions/", { params })
     return response.data
   }
 }
