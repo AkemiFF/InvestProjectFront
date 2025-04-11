@@ -14,7 +14,7 @@ const routeConfig = {
   common: {
     Dashboard: "/dashboard",
     Projects: "/projects",
-    Finances: "/payments",
+    Finances: "/wallet",
     Settings: "/profile"
   },
   admin: {
@@ -118,7 +118,7 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
               <NavItem icon={Briefcase} label="Projects" href={routeConfig.common.Projects} />
               <NavItem icon={Users} label="Network" href={routeConfig.user.Network} />
               <NavItem icon={MessageSquare} label="Messages" href={routeConfig.user.Messages} />
-              <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} />
+              <NavItem icon={Wallet} label="Wallet" href={routeConfig.common.Finances} />
               <NavItem icon={Heart} label="Favorites" href={routeConfig.user.Favorites} />
               <NavItem icon={FileText} label="Contracts" href={routeConfig.user.Contracts} />
               <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />
