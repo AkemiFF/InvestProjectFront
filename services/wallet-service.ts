@@ -4,6 +4,7 @@ export interface Wallet {
   id: number
   balance: string
   updated_at: string
+  currency?: string
 }
 
 export interface WalletTransaction {
@@ -16,6 +17,26 @@ export interface WalletTransaction {
 export interface DepositIntent {
   clientSecret: string
   transaction_id: number
+}
+
+export interface WithdrawalResponse {
+  status: string
+  transaction_id: number
+  amount: number
+  currency: string
+  estimated_arrival: string
+}
+
+export interface CurrencyChangeResponse {
+  status: string
+  new_balance: string
+  currency: string
+}
+
+export interface WithdrawalLimits {
+  EUR: number
+  USD: number
+  MGA: number
 }
 
 export interface InvestmentSummary {
@@ -91,7 +112,30 @@ class WalletService {
   }
 
   async confirmDeposit(paymentIntentId: string): Promise<{ status: string }> {
-    const response = await apiClient.post("/api/wallet/wallets/confirm_deposit/", { payment_intent_id: paymentIntentId })
+    const response = await apiClient.post("/api/wallet/wallets/confirm_deposit/", {
+      payment_intent_id: paymentIntentId,
+    })
+    return response.data
+  }
+
+  async createWithdrawal(data: {
+    amount: number
+    currency?: string
+    account_number?: string
+    bank_code?: string
+    account_name?: string
+  }): Promise<WithdrawalResponse> {
+    const response = await apiClient.post("/api/wallet/wallets/create_withdrawal/", data)
+    return response.data
+  }
+
+  async changeCurrency(currency: string): Promise<CurrencyChangeResponse> {
+    const response = await apiClient.post("/api/wallet/wallets/change_currency/", { currency })
+    return response.data
+  }
+
+  async getWithdrawalLimits(): Promise<WithdrawalLimits> {
+    const response = await apiClient.get("/api/wallet/wallets/withdrawal_limits/")
     return response.data
   }
 
