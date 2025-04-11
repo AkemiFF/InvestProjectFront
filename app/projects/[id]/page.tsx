@@ -53,6 +53,7 @@ export default function ProjectDetailPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorMontant, setErrorMontant] = useState<string | null>(null)
 
   // Fetch project data
   useEffect(() => {
@@ -805,48 +806,43 @@ export default function ProjectDetailPage() {
                     </Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                      <Input
-                        id="investmentAmount"
-                        type="number"
-                        placeholder={project.minimum_investment}
-                        className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
-                        value={investmentAmount}
-                        onChange={(e) => {
-                          const inputValue = e.target.value;
+                      <div className="space-y-2"> {/* Conteneur avec espacement */}
+                        <Input
+                          id="investmentAmount"
+                          type="number"
+                          placeholder={project.minimum_investment}
+                          className={`pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 ${error && "border-red-500"
+                            }`}
+                          value={investmentAmount}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setInvestmentAmount(value);
+                            setErrorMontant(""); // Réinitialise l'erreur à chaque modification
+                          }}
+                          onBlur={() => {
+                            const numericValue = Number(investmentAmount);
+                            const min = Number(project.minimum_investment);
+                            const max = Number(project.maximum_investment);
 
-                          // Permet de vider le champ ou de taper un nouveau nombre
-                          if (inputValue === '') {
-                            setInvestmentAmount('');
-                            return;
-                          }
+                            if (investmentAmount === "") {
+                              setErrorMontant("Veuillez saisir un montant");
+                            } else if (isNaN(numericValue)) {
+                              setErrorMontant("Montant invalide");
+                            } else if (numericValue < min) {
+                              setErrorMontant(`Le montant minimum est ${formatCurrency(min)}`);
+                            } else if (numericValue > max) {
+                              setErrorMontant(`Le montant maximum est ${formatCurrency(max)}`);
+                            }
+                          }}
+                        />
 
-                          const numericValue = Number(inputValue);
-                          const max = Number(project.maximum_investment);
-
-                          // Bloque la saisie si le nombre dépasse le max
-                          if (!isNaN(numericValue) && numericValue <= max) {
-                            setInvestmentAmount(inputValue);
-                          }
-                        }}
-                        onBlur={() => {
-                          const value = Number(investmentAmount);
-                          const min = Number(project.minimum_investment);
-                          const max = Number(project.maximum_investment);
-
-                          if (investmentAmount === '') {
-                            setInvestmentAmount(min.toString());
-                            return;
-                          }
-
-                          if (isNaN(value)) {
-                            setInvestmentAmount(min.toString());
-                          } else if (value < min) {
-                            setInvestmentAmount(min.toString());
-                          } else if (value > max) {
-                            setInvestmentAmount(max.toString());
-                          }
-                        }}
-                      />
+                        {/* Message d'erreur positionné en dessous */}
+                        {errorMontant && (
+                          <p className="text-sm text-red-500 mt-1"> {/* marge-top de 4px */}
+                            {errorMontant}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">
