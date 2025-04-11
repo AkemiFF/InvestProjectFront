@@ -1,15 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowDown, ArrowUp, Clock, CreditCard, DollarSign, Download, Plus, Wallet } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
+import type { Transaction, Wallet } from "@/services/wallet-service"
 import { walletService } from "@/services/wallet-service"
-import type { Wallet, Transaction } from "@/services/wallet-service"
+import {
+  ArrowDown,
+  ArrowUp,
+  Banknote,
+  Clock,
+  DollarSign,
+  Download,
+  Euro,
+  Plus,
+  DollarSignIcon as USDIcon,
+  WalletIcon
+} from "lucide-react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 
 export default function WalletPage() {
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
@@ -17,6 +30,7 @@ export default function WalletPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [changingCurrency, setChangingCurrency] = useState(false)
 
   useEffect(() => {
     const fetchWalletData = async () => {
@@ -40,13 +54,49 @@ export default function WalletPage() {
     fetchWalletData()
   }, [])
 
+  const handleChangeCurrency = async (currency: string) => {
+    try {
+      setChangingCurrency(true)
+      const response = await walletService.changeCurrency(currency)
+
+      // Mettre à jour le portefeuille avec les nouvelles données
+      setWallet((prev) =>
+        prev
+          ? {
+            ...prev,
+            balance: response.new_balance,
+            currency: response.currency,
+          }
+          : null,
+      )
+
+      toast({
+        title: "Devise modifiée",
+        description: response.status,
+      })
+    } catch (err) {
+      console.error("Error changing currency:", err)
+      toast({
+        title: "Erreur",
+        description: "Impossible de changer la devise. Veuillez réessayer.",
+        variant: "destructive",
+      })
+    } finally {
+      setChangingCurrency(false)
+    }
+  }
+
   // Format currency
-  const formatCurrency = (amount: number | string) => {
+  const formatCurrency = (amount: number | string, currency?: string) => {
     const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount
+
+    // Utiliser la devise du portefeuille ou celle spécifiée
+    const currencyCode = currency || wallet?.currency || "MGA"
+
     return new Intl.NumberFormat("fr-MG", {
       style: "currency",
-      currency: "MGA",
-      maximumFractionDigits: 0,
+      currency: currencyCode,
+      maximumFractionDigits: currencyCode === "MGA" ? 0 : 2,
     }).format(numAmount)
   }
 
@@ -98,6 +148,22 @@ export default function WalletPage() {
     }
   }
 
+  // Get currency icon
+  const getCurrencyIcon = (currency?: string) => {
+    const currencyCode = currency || wallet?.currency || "MGA"
+
+    switch (currencyCode) {
+      case "EUR":
+        return <Euro className="h-4 w-4" />
+      case "USD":
+        return <USDIcon className="h-4 w-4" />
+      case "MGA":
+        return <Banknote className="h-4 w-4" />
+      default:
+        return <DollarSign className="h-4 w-4" />
+    }
+  }
+
   return (
     <DashboardLayout userType={userType}>
       <div className="space-y-6">
@@ -108,6 +174,41 @@ export default function WalletPage() {
           </div>
 
           <div className="flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                  {getCurrencyIcon(wallet?.currency)}
+                  <span className="ml-2">{wallet?.currency || "MGA"}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                <DropdownMenuItem
+                  onClick={() => handleChangeCurrency("EUR")}
+                  className="text-slate-200 focus:bg-slate-700 focus:text-slate-100"
+                  disabled={changingCurrency || wallet?.currency === "EUR"}
+                >
+                  <Euro className="mr-2 h-4 w-4 text-slate-400" />
+                  <span>Euro (EUR)</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleChangeCurrency("USD")}
+                  className="text-slate-200 focus:bg-slate-700 focus:text-slate-100"
+                  disabled={changingCurrency || wallet?.currency === "USD"}
+                >
+                  <USDIcon className="mr-2 h-4 w-4 text-slate-400" />
+                  <span>Dollar (USD)</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleChangeCurrency("MGA")}
+                  className="text-slate-200 focus:bg-slate-700 focus:text-slate-100"
+                  disabled={changingCurrency || wallet?.currency === "MGA"}
+                >
+                  <Banknote className="mr-2 h-4 w-4 text-slate-400" />
+                  <span>Ariary (MGA)</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Link href="/wallet/deposit">
               <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500">
                 <Plus className="mr-2 h-4 w-4" /> Déposer des fonds
@@ -150,11 +251,11 @@ export default function WalletPage() {
                 <CardContent>
                   <div className="flex items-center space-x-4">
                     <div className="h-16 w-16 rounded-full bg-cyan-900/30 flex items-center justify-center">
-                      <Wallet className="h-8 w-8 text-cyan-500" />
+                      <WalletIcon className="h-8 w-8 text-cyan-500" />
                     </div>
                     <div>
                       <div className="text-3xl font-bold text-slate-100">
-                        {wallet ? formatCurrency(wallet.balance) : "0 MGA"}
+                        {wallet ? formatCurrency(wallet.balance, wallet.currency) : "0"}
                       </div>
                       <div className="text-sm text-slate-400">
                         Dernière mise à jour: {wallet ? formatDate(wallet.updated_at) : "N/A"}
@@ -168,9 +269,11 @@ export default function WalletPage() {
                       <Plus className="mr-2 h-4 w-4" /> Déposer
                     </Button>
                   </Link>
-                  <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
-                    <ArrowUp className="mr-2 h-4 w-4" /> Retirer
-                  </Button>
+                  <Link href="/wallet/withdraw">
+                    <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                      <ArrowUp className="mr-2 h-4 w-4" /> Retirer
+                    </Button>
+                  </Link>
                 </CardFooter>
               </Card>
 
@@ -181,12 +284,12 @@ export default function WalletPage() {
                 <CardContent>
                   <div className="space-y-3">
                     <Link href="/wallet/deposit">
-                      <Button
+                      {/* <Button
                         variant="outline"
                         className="w-full justify-start border-slate-700 text-slate-300 hover:bg-slate-800"
                       >
                         <CreditCard className="mr-2 h-4 w-4 text-cyan-500" /> Ajouter une carte
-                      </Button>
+                      </Button> */}
                     </Link>
                     <Link href="/projects">
                       <Button
@@ -266,10 +369,10 @@ export default function WalletPage() {
                                   <td className="p-3">
                                     <div className={`text-sm font-medium ${color}`}>
                                       {transaction.transaction_type === "deposit" ||
-                                      transaction.transaction_type === "return"
+                                        transaction.transaction_type === "return"
                                         ? "+"
                                         : "-"}
-                                      {formatCurrency(transaction.amount)}
+                                      {formatCurrency(transaction.amount, wallet?.currency)}
                                     </div>
                                   </td>
                                   <td className="p-3">
@@ -347,7 +450,7 @@ export default function WalletPage() {
                                     </td>
                                     <td className="p-3">
                                       <div className={`text-sm font-medium ${color}`}>
-                                        +{formatCurrency(transaction.amount)}
+                                        +{formatCurrency(transaction.amount, wallet?.currency)}
                                       </div>
                                     </td>
                                     <td className="p-3">
@@ -425,7 +528,7 @@ export default function WalletPage() {
                                     </td>
                                     <td className="p-3">
                                       <div className={`text-sm font-medium ${color}`}>
-                                        -{formatCurrency(transaction.amount)}
+                                        -{formatCurrency(transaction.amount, wallet?.currency)}
                                       </div>
                                     </td>
                                     <td className="p-3">
@@ -501,11 +604,11 @@ export default function WalletPage() {
                                       </div>
                                     </td>
                                     <td className="p-3">
-                                      <div className="text-sm text-slate-300">{formatDate(transaction.create_at)}</div>
+                                      <div className="text-sm text-slate-300">{formatDate(transaction.created_at)}</div>
                                     </td>
                                     <td className="p-3">
                                       <div className={`text-sm font-medium ${color}`}>
-                                        -{formatCurrency(transaction.amount)}
+                                        -{formatCurrency(transaction.amount, wallet?.currency)}
                                       </div>
                                     </td>
                                     <td className="p-3">
