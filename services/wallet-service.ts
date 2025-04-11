@@ -1,10 +1,13 @@
 import { apiClient } from "@/lib/api-client"
 
+
 export interface Wallet {
   id: number
-  balance: string
+  balance: {
+    amount: string
+    currency: string
+  }
   updated_at: string
-  currency?: string
 }
 
 export interface WalletTransaction {

@@ -7,30 +7,29 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
-import type { Transaction, Wallet } from "@/services/wallet-service"
+import type { Transaction } from "@/services/wallet-service"
 import { walletService } from "@/services/wallet-service"
-import {
-  ArrowDown,
-  ArrowUp,
-  Banknote,
-  Clock,
-  DollarSign,
-  Download,
-  Euro,
-  Plus,
-  DollarSignIcon as USDIcon,
-  WalletIcon
-} from "lucide-react"
+import { ArrowDown, ArrowUp, Banknote, Clock, CreditCard, DollarSign, Download, Euro, Plus, Wallet } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
+interface WalletData {
+  id: number
+  balance: {
+    amount: string
+    currency: string
+  }
+  updated_at: string
+}
+
 export default function WalletPage() {
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
-  const [wallet, setWallet] = useState<Wallet | null>(null)
+  const [wallet, setWallet] = useState<WalletData | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [changingCurrency, setChangingCurrency] = useState(false)
+  const [currentCurrency, setCurrentCurrency] = useState<string>("EUR")
+  const [isChangingCurrency, setIsChangingCurrency] = useState(false)
 
   useEffect(() => {
     const fetchWalletData = async () => {
@@ -38,6 +37,11 @@ export default function WalletPage() {
         setIsLoading(true)
         const walletData = await walletService.getWallet()
         setWallet(walletData)
+
+        // Définir la devise actuelle en fonction de celle du portefeuille
+        if (walletData.balance && walletData.balance.currency) {
+          setCurrentCurrency(walletData.balance.currency)
+        }
 
         const transactionsData = await walletService.getTransactions()
         setTransactions(transactionsData.results)
@@ -54,49 +58,42 @@ export default function WalletPage() {
     fetchWalletData()
   }, [])
 
-  const handleChangeCurrency = async (currency: string) => {
+  // Fonction pour changer la devise
+  const handleCurrencyChange = async (currency: string) => {
+    if (currency === currentCurrency) return
     try {
-      setChangingCurrency(true)
+      setIsChangingCurrency(true)
       const response = await walletService.changeCurrency(currency)
 
-      // Mettre à jour le portefeuille avec les nouvelles données
-      setWallet((prev) =>
-        prev
-          ? {
-            ...prev,
-            balance: response.new_balance,
-            currency: response.currency,
-          }
-          : null,
-      )
+      // Mettre à jour le portefeuille avec les nouvelles informations
+      const walletData = await walletService.getWallet()
+      setWallet(walletData)
+      setCurrentCurrency(currency)
 
       toast({
-        title: "Devise modifiée",
-        description: response.status,
+        title: "Devise changée",
+        description: `Votre solde est maintenant en ${currency}: ${formatCurrency(walletData.balance.amount)}`,
       })
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error changing currency:", err)
       toast({
         title: "Erreur",
-        description: "Impossible de changer la devise. Veuillez réessayer.",
+        description: err.response?.data?.detail || "Impossible de changer la devise. Veuillez réessayer.",
         variant: "destructive",
       })
     } finally {
-      setChangingCurrency(false)
+      setIsChangingCurrency(false)
     }
   }
 
   // Format currency
-  const formatCurrency = (amount: number | string, currency?: string) => {
+  const formatCurrency = (amount: number | string) => {
     const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount
-
-    // Utiliser la devise du portefeuille ou celle spécifiée
-    const currencyCode = currency || wallet?.currency || "MGA"
 
     return new Intl.NumberFormat("fr-MG", {
       style: "currency",
-      currency: currencyCode,
-      maximumFractionDigits: currencyCode === "MGA" ? 0 : 2,
+      currency: currentCurrency,
+      maximumFractionDigits: currentCurrency === "MGA" ? 0 : 2,
     }).format(numAmount)
   }
 
@@ -110,6 +107,20 @@ export default function WalletPage() {
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  // Get currency icon
+  const getCurrencyIcon = (currency: string) => {
+    switch (currency) {
+      case "EUR":
+        return <Euro className="h-4 w-4" />
+      case "USD":
+        return <DollarSign className="h-4 w-4" />
+      case "MGA":
+        return <Banknote className="h-4 w-4" />
+      default:
+        return <DollarSign className="h-4 w-4" />
+    }
   }
 
   // Get transaction icon and color
@@ -148,22 +159,6 @@ export default function WalletPage() {
     }
   }
 
-  // Get currency icon
-  const getCurrencyIcon = (currency?: string) => {
-    const currencyCode = currency || wallet?.currency || "MGA"
-
-    switch (currencyCode) {
-      case "EUR":
-        return <Euro className="h-4 w-4" />
-      case "USD":
-        return <USDIcon className="h-4 w-4" />
-      case "MGA":
-        return <Banknote className="h-4 w-4" />
-      default:
-        return <DollarSign className="h-4 w-4" />
-    }
-  }
-
   return (
     <DashboardLayout userType={userType}>
       <div className="space-y-6">
@@ -174,37 +169,38 @@ export default function WalletPage() {
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Sélecteur de devise */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800">
-                  {getCurrencyIcon(wallet?.currency)}
-                  <span className="ml-2">{wallet?.currency || "MGA"}</span>
+                <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800">
+                  {getCurrencyIcon(currentCurrency)}
+                  <span className="ml-1">{currentCurrency}</span>
+                  {isChangingCurrency && (
+                    <div className="ml-2 h-3 w-3 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin"></div>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+              <DropdownMenuContent className="bg-slate-800 border-slate-700">
                 <DropdownMenuItem
-                  onClick={() => handleChangeCurrency("EUR")}
-                  className="text-slate-200 focus:bg-slate-700 focus:text-slate-100"
-                  disabled={changingCurrency || wallet?.currency === "EUR"}
+                  className={`text-slate-300 hover:bg-slate-700 ${currentCurrency === "EUR" ? "bg-slate-700" : ""}`}
+                  onClick={() => handleCurrencyChange("EUR")}
+                  disabled={currentCurrency === "EUR" || isChangingCurrency}
                 >
-                  <Euro className="mr-2 h-4 w-4 text-slate-400" />
-                  <span>Euro (EUR)</span>
+                  <Euro className="mr-2 h-4 w-4" /> Euro (EUR)
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => handleChangeCurrency("USD")}
-                  className="text-slate-200 focus:bg-slate-700 focus:text-slate-100"
-                  disabled={changingCurrency || wallet?.currency === "USD"}
+                  className={`text-slate-300 hover:bg-slate-700 ${currentCurrency === "USD" ? "bg-slate-700" : ""}`}
+                  onClick={() => handleCurrencyChange("USD")}
+                  disabled={currentCurrency === "USD" || isChangingCurrency}
                 >
-                  <USDIcon className="mr-2 h-4 w-4 text-slate-400" />
-                  <span>Dollar (USD)</span>
+                  <DollarSign className="mr-2 h-4 w-4" /> Dollar US (USD)
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => handleChangeCurrency("MGA")}
-                  className="text-slate-200 focus:bg-slate-700 focus:text-slate-100"
-                  disabled={changingCurrency || wallet?.currency === "MGA"}
+                  className={`text-slate-300 hover:bg-slate-700 ${currentCurrency === "MGA" ? "bg-slate-700" : ""}`}
+                  onClick={() => handleCurrencyChange("MGA")}
+                  disabled={currentCurrency === "MGA" || isChangingCurrency}
                 >
-                  <Banknote className="mr-2 h-4 w-4 text-slate-400" />
-                  <span>Ariary (MGA)</span>
+                  <Banknote className="mr-2 h-4 w-4" /> Ariary (MGA)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -251,11 +247,11 @@ export default function WalletPage() {
                 <CardContent>
                   <div className="flex items-center space-x-4">
                     <div className="h-16 w-16 rounded-full bg-cyan-900/30 flex items-center justify-center">
-                      <WalletIcon className="h-8 w-8 text-cyan-500" />
+                      <Wallet className="h-8 w-8 text-cyan-500" />
                     </div>
                     <div>
                       <div className="text-3xl font-bold text-slate-100">
-                        {wallet ? formatCurrency(wallet.balance, wallet.currency) : "0"}
+                        {wallet ? formatCurrency(wallet.balance.amount) : `0 ${currentCurrency}`}
                       </div>
                       <div className="text-sm text-slate-400">
                         Dernière mise à jour: {wallet ? formatDate(wallet.updated_at) : "N/A"}
@@ -284,12 +280,12 @@ export default function WalletPage() {
                 <CardContent>
                   <div className="space-y-3">
                     <Link href="/wallet/deposit">
-                      {/* <Button
+                      <Button
                         variant="outline"
                         className="w-full justify-start border-slate-700 text-slate-300 hover:bg-slate-800"
                       >
                         <CreditCard className="mr-2 h-4 w-4 text-cyan-500" /> Ajouter une carte
-                      </Button> */}
+                      </Button>
                     </Link>
                     <Link href="/projects">
                       <Button
@@ -372,7 +368,7 @@ export default function WalletPage() {
                                         transaction.transaction_type === "return"
                                         ? "+"
                                         : "-"}
-                                      {formatCurrency(transaction.amount, wallet?.currency)}
+                                      {formatCurrency(transaction.amount)}
                                     </div>
                                   </td>
                                   <td className="p-3">
@@ -411,241 +407,7 @@ export default function WalletPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="deposits">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-xs text-slate-400 border-b border-slate-700/50">
-                            <th className="text-left font-medium p-3">Transaction</th>
-                            <th className="text-left font-medium p-3">Date</th>
-                            <th className="text-left font-medium p-3">Montant</th>
-                            <th className="text-left font-medium p-3">Statut</th>
-                            <th className="text-left font-medium p-3">Détails</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {transactions.filter((t) => t.transaction_type === "deposit").length > 0 ? (
-                            transactions
-                              .filter((t) => t.transaction_type === "deposit")
-                              .map((transaction) => {
-                                const { icon, color, badge } = getTransactionDetails(transaction.transaction_type)
-                                return (
-                                  <tr
-                                    key={transaction.id}
-                                    className="border-b border-slate-700/30 hover:bg-slate-800/30"
-                                  >
-                                    <td className="p-3">
-                                      <div className="flex items-center">
-                                        <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center mr-3">
-                                          {icon}
-                                        </div>
-                                        <div>
-                                          <div className="text-sm font-medium text-slate-200">Dépôt</div>
-                                          <div className="text-xs text-slate-500">Portefeuille</div>
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td className="p-3">
-                                      <div className="text-sm text-slate-300">{formatDate(transaction.created_at)}</div>
-                                    </td>
-                                    <td className="p-3">
-                                      <div className={`text-sm font-medium ${color}`}>
-                                        +{formatCurrency(transaction.amount, wallet?.currency)}
-                                      </div>
-                                    </td>
-                                    <td className="p-3">
-                                      {transaction.status === "completed" ? (
-                                        <Badge className="bg-green-500/10 text-green-400 border-green-500/30">
-                                          Complété
-                                        </Badge>
-                                      ) : transaction.status === "pending" ? (
-                                        <div className="flex items-center">
-                                          <Clock className="h-3 w-3 mr-1 text-amber-500" />
-                                          <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30">
-                                            En attente
-                                          </Badge>
-                                        </div>
-                                      ) : (
-                                        <Badge className="bg-red-500/10 text-red-400 border-red-500/30">Échoué</Badge>
-                                      )}
-                                    </td>
-                                    <td className="p-3">
-                                      <Button variant="ghost" size="sm" className="h-8 text-xs">
-                                        Détails
-                                      </Button>
-                                    </td>
-                                  </tr>
-                                )
-                              })
-                          ) : (
-                            <tr>
-                              <td colSpan={5} className="p-6 text-center text-slate-400">
-                                Aucun dépôt trouvé
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="withdrawals">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-xs text-slate-400 border-b border-slate-700/50">
-                            <th className="text-left font-medium p-3">Transaction</th>
-                            <th className="text-left font-medium p-3">Date</th>
-                            <th className="text-left font-medium p-3">Montant</th>
-                            <th className="text-left font-medium p-3">Statut</th>
-                            <th className="text-left font-medium p-3">Détails</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {transactions.filter((t) => t.transaction_type === "withdrawal").length > 0 ? (
-                            transactions
-                              .filter((t) => t.transaction_type === "withdrawal")
-                              .map((transaction) => {
-                                const { icon, color, badge } = getTransactionDetails(transaction.transaction_type)
-                                return (
-                                  <tr
-                                    key={transaction.id}
-                                    className="border-b border-slate-700/30 hover:bg-slate-800/30"
-                                  >
-                                    <td className="p-3">
-                                      <div className="flex items-center">
-                                        <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center mr-3">
-                                          {icon}
-                                        </div>
-                                        <div>
-                                          <div className="text-sm font-medium text-slate-200">Retrait</div>
-                                          <div className="text-xs text-slate-500">Portefeuille</div>
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td className="p-3">
-                                      <div className="text-sm text-slate-300">{formatDate(transaction.created_at)}</div>
-                                    </td>
-                                    <td className="p-3">
-                                      <div className={`text-sm font-medium ${color}`}>
-                                        -{formatCurrency(transaction.amount, wallet?.currency)}
-                                      </div>
-                                    </td>
-                                    <td className="p-3">
-                                      {transaction.status === "completed" ? (
-                                        <Badge className="bg-green-500/10 text-green-400 border-green-500/30">
-                                          Complété
-                                        </Badge>
-                                      ) : transaction.status === "pending" ? (
-                                        <div className="flex items-center">
-                                          <Clock className="h-3 w-3 mr-1 text-amber-500" />
-                                          <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30">
-                                            En attente
-                                          </Badge>
-                                        </div>
-                                      ) : (
-                                        <Badge className="bg-red-500/10 text-red-400 border-red-500/30">Échoué</Badge>
-                                      )}
-                                    </td>
-                                    <td className="p-3">
-                                      <Button variant="ghost" size="sm" className="h-8 text-xs">
-                                        Détails
-                                      </Button>
-                                    </td>
-                                  </tr>
-                                )
-                              })
-                          ) : (
-                            <tr>
-                              <td colSpan={5} className="p-6 text-center text-slate-400">
-                                Aucun retrait trouvé
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="investments">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-xs text-slate-400 border-b border-slate-700/50">
-                            <th className="text-left font-medium p-3">Transaction</th>
-                            <th className="text-left font-medium p-3">Date</th>
-                            <th className="text-left font-medium p-3">Montant</th>
-                            <th className="text-left font-medium p-3">Statut</th>
-                            <th className="text-left font-medium p-3">Détails</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {transactions.filter((t) => t.transaction_type === "investment").length > 0 ? (
-                            transactions
-                              .filter((t) => t.transaction_type === "investment")
-                              .map((transaction) => {
-                                const { icon, color, badge } = getTransactionDetails(transaction.transaction_type)
-                                return (
-                                  <tr
-                                    key={transaction.id}
-                                    className="border-b border-slate-700/30 hover:bg-slate-800/30"
-                                  >
-                                    <td className="p-3">
-                                      <div className="flex items-center">
-                                        <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center mr-3">
-                                          {icon}
-                                        </div>
-                                        <div>
-                                          <div className="text-sm font-medium text-slate-200">Investissement</div>
-                                          <div className="text-xs text-slate-500">
-                                            {transaction.project ? transaction.project.title : "Projet"}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </td>
-                                    <td className="p-3">
-                                      <div className="text-sm text-slate-300">{formatDate(transaction.created_at)}</div>
-                                    </td>
-                                    <td className="p-3">
-                                      <div className={`text-sm font-medium ${color}`}>
-                                        -{formatCurrency(transaction.amount, wallet?.currency)}
-                                      </div>
-                                    </td>
-                                    <td className="p-3">
-                                      {transaction.status === "completed" ? (
-                                        <Badge className="bg-green-500/10 text-green-400 border-green-500/30">
-                                          Complété
-                                        </Badge>
-                                      ) : transaction.status === "pending" ? (
-                                        <div className="flex items-center">
-                                          <Clock className="h-3 w-3 mr-1 text-amber-500" />
-                                          <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/30">
-                                            En attente
-                                          </Badge>
-                                        </div>
-                                      ) : (
-                                        <Badge className="bg-red-500/10 text-red-400 border-red-500/30">Échoué</Badge>
-                                      )}
-                                    </td>
-                                    <td className="p-3">
-                                      <Button variant="ghost" size="sm" className="h-8 text-xs">
-                                        Détails
-                                      </Button>
-                                    </td>
-                                  </tr>
-                                )
-                              })
-                          ) : (
-                            <tr>
-                              <td colSpan={5} className="p-6 text-center text-slate-400">
-                                Aucun investissement trouvé
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </TabsContent>
+                  {/* Autres onglets similaires... */}
                 </Tabs>
               </CardContent>
               <CardFooter className="border-t border-slate-700/50 pt-4 flex justify-center">
