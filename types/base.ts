@@ -17,6 +17,11 @@ export interface AuthResponse {
         refresh: number; // Durée en secondes
     };
 }
+export interface ApiResponse<T> {
+    data: T
+    message: string
+    success: boolean
+}
 
 // Type pour les erreurs d'API
 export interface ApiError {
