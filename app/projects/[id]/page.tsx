@@ -151,7 +151,7 @@ export default function ProjectDetailPage() {
         completed: false,
       },
     ],
-    updates: [
+    update: [
       {
         date: "2023-11-10",
         title: "Beta Testing Results",
@@ -388,10 +388,10 @@ export default function ProjectDetailPage() {
                   Team
                 </TabsTrigger>
                 <TabsTrigger
-                  value="updates"
+                  value="update_project"
                   className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
                 >
-                  Updates
+                  Update
                 </TabsTrigger>
                 <TabsTrigger
                   value="comments"
@@ -719,14 +719,14 @@ export default function ProjectDetailPage() {
 
               </TabsContent>
 
-              <TabsContent value="updates" className="space-y-6">
+              <TabsContent value="update_project" className="space-y-6">
                 <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Project Updates</CardTitle>
+                    <CardTitle className="text-slate-100 text-lg">Project update</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {projectExtendedData.updates.map((update, index) => (
+                      {project.update_project.map((update, index) => (
                         <div key={index} className="bg-slate-800/50 rounded-md p-4 border border-slate-700/50">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-sm font-medium text-slate-200">{update.title}</h4>
