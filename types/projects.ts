@@ -1,0 +1,158 @@
+// types/projects.ts
+export interface Media {
+  cover: boolean
+  id: number
+  file_url: string
+  file_type: string
+  title: string
+  uploaded_at: string
+}
+export interface Team {
+  id: number
+  name: string
+  role: string
+  photo: string
+  facebook_url: string
+}
+export interface Project {
+  id: number
+  title: string
+  slug: string
+  owner: {
+    id: number
+    username: string
+    email: string
+    first_name: string
+    last_name: string
+    user_type: string
+    profile_picture: string | null
+    biography: string
+    phone_number: string
+    email_verified: boolean
+    date_joined: string
+  }
+  sector: {
+    id: number
+    name: string
+    description: string
+  }
+  amount_needed: string
+  amount_raised: string
+  minimum_investment: string
+  maximum_investment: string
+  status: "draft" | "pending" | "active" | "funded" | "failed" | "cancelled"
+  created_at: string
+  deadline: string
+  is_featured: boolean
+  progress: number
+  days_left: number
+  participants_count: number
+  interests_count: number
+  media: Media[]
+  short_description?: string
+  market_analysis?: string
+  description?: string
+  location?: string
+  thumbnail?: string
+  video_url?: string
+  is_verified?: boolean
+  updated_at?: string
+  business_model?: string
+  financial_projections?: string
+  competitive_advantage?: string
+  team_members: Team[]
+  expected_return?: number
+  equity?: number
+  tags?: string[]
+  risks?: string
+  use_of_funds?: string
+  return_timeline?: string
+}
+
+export interface ProjectImage {
+  id: number
+  project: number
+  image: string
+  order: number
+  created_at: string
+}
+
+export interface ProjectDocument {
+  id: number
+  project: number
+  title: string
+  document: string
+  file_type: string
+  file_size: number
+  created_at: string
+}
+
+export interface ProjectCreateData {
+  title: string
+  description: string
+  short_description: string
+  sector?: number | string // ID du secteur
+  sector_id?: number | string | null// ID du secteur
+  amount_needed: number | string
+  deadline: string
+  location?: string
+  thumbnail?: File
+  images?: File[]
+  video_url?: string
+  documents?: File[]
+  tags?: string[]
+  business_model?: string
+  market_analysis?: string
+  competitive_advantage?: string
+  use_of_funds?: string
+  financial_projections?: string
+  risks?: string
+  team?: {
+    name: string
+    role: string
+    photo?: File
+    facebook_url?: string | null
+  }[] | string
+  milestones?: {
+    title: string
+    description: string
+    due_date: string
+  }[]
+  equity?: string
+  minimum_investment?: number | string
+  maximum_investment?: number | string
+  expected_return?: number
+  return_timeline?: string
+  allow_partial_funding?: boolean
+  is_public?: boolean
+}
+
+export interface ProjectUpdateData {
+  title?: string
+  description?: string
+  sector?: number | string // ID du secteur
+  amount_needed?: number | string
+  deadline?: string
+  location?: string
+  thumbnail?: File
+  video_url?: string
+  tags?: string[]
+}
+
+export interface ProjectStats {
+  total_participants: number
+  total_raised: number
+  progress: number
+  days_left: number
+  recent_participants: Array<{
+    user_id: number
+    username: string
+    amount: number
+    date: string
+  }>
+  funding_history: Array<{
+    date: string
+    amount: number
+  }>
+}
+

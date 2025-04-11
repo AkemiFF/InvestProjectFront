@@ -2,11 +2,11 @@
 
 import type React from "react"
 
-import { useEffect, useState, useRef } from "react"
-import { ThemeProvider } from "@/components/theme-provider"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar"
+import { ThemeProvider } from "@/components/theme-provider"
 import { LoadingScreen } from "@/components/ui/loading-screen"
+import { useEffect, useRef, useState } from "react"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -23,6 +23,7 @@ export function DashboardLayout({ children, userType = "investor" }: DashboardLa
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 2000)
+    // console.log(userType);
 
     return () => clearTimeout(timer)
   }, [])
@@ -50,8 +51,8 @@ export function DashboardLayout({ children, userType = "investor" }: DashboardLa
       color: string
 
       constructor() {
-        this.x = Math.random() * canvas.width
-        this.y = Math.random() * canvas.height
+        this.x = Math.random() * (canvas?.width || 0)
+        this.y = Math.random() * (canvas?.height || 0)
         this.size = Math.random() * 3 + 1
         this.speedX = (Math.random() - 0.5) * 0.5
         this.speedY = (Math.random() - 0.5) * 0.5
@@ -62,10 +63,12 @@ export function DashboardLayout({ children, userType = "investor" }: DashboardLa
         this.x += this.speedX
         this.y += this.speedY
 
-        if (this.x > canvas.width) this.x = 0
-        if (this.x < 0) this.x = canvas.width
-        if (this.y > canvas.height) this.y = 0
-        if (this.y < 0) this.y = canvas.height
+        if (canvas) {
+          if (this.x > canvas.width) this.x = 0
+          if (this.x < 0) this.x = canvas.width
+          if (this.y > canvas.height) this.y = 0
+          if (this.y < 0) this.y = canvas.height
+        }
       }
 
       draw() {

@@ -1,690 +1,354 @@
-import Link from "next/link"
-import {
-  ArrowRight,
-  ChevronRight,
-  Hexagon,
-  BarChart3,
-  Briefcase,
-  Users,
-  Shield,
-  Zap,
-  CheckCircle2,
-  Star,
-} from "lucide-react"
+"use client"
+
+import { MessageItem } from "@/components/dashboard/message-item"
+import { MetricCard } from "@/components/dashboard/metric-card"
+import { PerformanceChart } from "@/components/dashboard/performance-chart"
+import { ProjectCard } from "@/components/dashboard/project-card"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { useLayoutContext } from "@/components/layout/LayoutContext"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Activity, Briefcase, DollarSign, Filter, Loader, MessageSquare, PieChart, Plus, TrendingUp, Wallet } from "lucide-react"
+import { useEffect, useState } from "react"
 
-export default function Home() {
-  return (
-    <div className="min-h-screen bg-black text-slate-100 flex flex-col">
-      {/* Animated background */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,255,255,0.15),transparent_40%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(128,0,255,0.15),transparent_40%)]"></div>
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-20"></div>
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-20"></div>
-        <div className="absolute top-0 bottom-0 left-0 w-px bg-gradient-to-b from-transparent via-cyan-500 to-transparent opacity-20"></div>
-        <div className="absolute top-0 bottom-0 right-0 w-px bg-gradient-to-b from-transparent via-purple-500 to-transparent opacity-20"></div>
-
-        {/* Animated grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 border-b border-slate-800 bg-black/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Hexagon className="h-8 w-8 text-cyan-500" />
-            <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              INVEST NEXUS
-            </span>
-          </div>
-          <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-slate-300 hover:text-cyan-400 transition-colors">
-              Features
-            </a>
-            <a href="#how-it-works" className="text-slate-300 hover:text-cyan-400 transition-colors">
-              How It Works
-            </a>
-            <a href="#testimonials" className="text-slate-300 hover:text-cyan-400 transition-colors">
-              Testimonials
-            </a>
-            <a href="#pricing" className="text-slate-300 hover:text-cyan-400 transition-colors">
-              Pricing
-            </a>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link href="/auth/login">
-              <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-slate-800">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500">
-                Get Started
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-grow relative z-10">
-        {/* Hero Section */}
-        <section className="py-20 md:py-32 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-8">
-                <div>
-                  <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                    <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                      Connect, Invest, Innovate
-                    </span>
-                  </h1>
-                  <p className="text-xl md:text-2xl text-slate-300 mb-8 leading-relaxed">
-                    The future of investment is here. Connect with visionary projects and smart investors on a single
-                    powerful platform.
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/auth/register">
-                    <Button
-                      size="lg"
-                      className="text-lg px-8 py-6 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 w-full sm:w-auto"
-                    >
-                      Create Account <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                  <Link href="/auth/login">
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="text-lg px-8 py-6 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white w-full sm:w-auto"
-                    >
-                      Sign In
-                    </Button>
-                  </Link>
-                </div>
-                <div className="flex items-center space-x-8 text-slate-400 text-sm">
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-4 w-4 text-cyan-500 mr-2" />
-                    <span>No credit card required</span>
-                  </div>
-                  <div className="flex items-center">
-                    <CheckCircle2 className="h-4 w-4 text-cyan-500 mr-2" />
-                    <span>Free starter plan</span>
-                  </div>
-                </div>
-              </div>
-              <div className="relative">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg opacity-75 blur-lg"></div>
-                <div className="relative bg-slate-900 rounded-lg overflow-hidden border border-slate-800">
-                  <div className="p-1">
-                    <img
-                      src="/placeholder.svg?height=500&width=600"
-                      alt="Platform Dashboard Preview"
-                      className="rounded w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Stats Section */}
-        <section className="py-12 bg-slate-900/50 border-y border-slate-800">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  $120M+
-                </p>
-                <p className="text-slate-400 mt-2">Total Investments</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  15,000+
-                </p>
-                <p className="text-slate-400 mt-2">Active Investors</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  2,500+
-                </p>
-                <p className="text-slate-400 mt-2">Funded Projects</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  98%
-                </p>
-                <p className="text-slate-400 mt-2">Satisfaction Rate</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="py-20 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                Platform Features
-              </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Everything you need to connect projects with investors in one powerful platform
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="bg-slate-900/50 border-slate-800 hover:border-cyan-800 transition-colors group">
-                <CardContent className="p-8">
-                  <div className="rounded-full w-12 h-12 flex items-center justify-center bg-cyan-500/10 mb-6 group-hover:bg-cyan-500/20 transition-colors">
-                    <BarChart3 className="h-6 w-6 text-cyan-500" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-white">Advanced Analytics</h3>
-                  <p className="text-slate-300">
-                    Track performance with real-time analytics and detailed reports on investments and projects.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-900/50 border-slate-800 hover:border-cyan-800 transition-colors group">
-                <CardContent className="p-8">
-                  <div className="rounded-full w-12 h-12 flex items-center justify-center bg-cyan-500/10 mb-6 group-hover:bg-cyan-500/20 transition-colors">
-                    <Briefcase className="h-6 w-6 text-cyan-500" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-white">Project Management</h3>
-                  <p className="text-slate-300">
-                    Comprehensive tools for project owners to showcase, manage, and update their ventures.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-900/50 border-slate-800 hover:border-cyan-800 transition-colors group">
-                <CardContent className="p-8">
-                  <div className="rounded-full w-12 h-12 flex items-center justify-center bg-cyan-500/10 mb-6 group-hover:bg-cyan-500/20 transition-colors">
-                    <Users className="h-6 w-6 text-cyan-500" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-white">Investor Network</h3>
-                  <p className="text-slate-300">
-                    Connect with a global network of investors looking for the next big opportunity.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-900/50 border-slate-800 hover:border-cyan-800 transition-colors group">
-                <CardContent className="p-8">
-                  <div className="rounded-full w-12 h-12 flex items-center justify-center bg-cyan-500/10 mb-6 group-hover:bg-cyan-500/20 transition-colors">
-                    <Shield className="h-6 w-6 text-cyan-500" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-white">Secure Transactions</h3>
-                  <p className="text-slate-300">
-                    Industry-leading security protocols to ensure all investments and transactions are protected.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-900/50 border-slate-800 hover:border-cyan-800 transition-colors group">
-                <CardContent className="p-8">
-                  <div className="rounded-full w-12 h-12 flex items-center justify-center bg-cyan-500/10 mb-6 group-hover:bg-cyan-500/20 transition-colors">
-                    <Zap className="h-6 w-6 text-cyan-500" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-white">Smart Matching</h3>
-                  <p className="text-slate-300">
-                    AI-powered algorithms match investors with projects that align with their interests and goals.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-900/50 border-slate-800 hover:border-cyan-800 transition-colors group">
-                <CardContent className="p-8">
-                  <div className="rounded-full w-12 h-12 flex items-center justify-center bg-cyan-500/10 mb-6 group-hover:bg-cyan-500/20 transition-colors">
-                    <Hexagon className="h-6 w-6 text-cyan-500" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-white">Integrated Ecosystem</h3>
-                  <p className="text-slate-300">
-                    A complete suite of tools for communication, payments, and project management in one platform.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* How It Works Section */}
-        <section id="how-it-works" className="py-20 px-4 bg-slate-900/30">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                How It Works
-              </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                A simple process to connect innovative projects with smart capital
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-              {/* Connection lines for desktop */}
-              <div className="hidden md:block absolute top-1/2 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-cyan-500 to-blue-500"></div>
-
-              <div className="relative">
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-8 relative z-10">
-                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                    1
-                  </div>
-                  <h3 className="text-xl font-bold mb-4 text-center mt-4 text-white">Create Your Account</h3>
-                  <p className="text-slate-300 text-center">
-                    Sign up as an investor or project owner and complete your profile with your interests and expertise.
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-8 relative z-10">
-                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                    2
-                  </div>
-                  <h3 className="text-xl font-bold mb-4 text-center mt-4 text-white">Connect & Discover</h3>
-                  <p className="text-slate-300 text-center">
-                    Browse projects or investors, use our smart matching system, and connect with potential partners.
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="bg-slate-900 border border-slate-800 rounded-lg p-8 relative z-10">
-                  <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                    3
-                  </div>
-                  <h3 className="text-xl font-bold mb-4 text-center mt-4 text-white">Invest & Grow</h3>
-                  <p className="text-slate-300 text-center">
-                    Make secure investments, track performance, and manage your portfolio or project all in one place.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-16 text-center">
-              <Link href="/auth/register">
-                <Button
-                  size="lg"
-                  className="text-lg px-8 py-6 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500"
-                >
-                  Get Started Now <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section id="testimonials" className="py-20 px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                What Our Users Say
-              </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Join thousands of satisfied investors and project owners
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="bg-slate-900/50 border-slate-800">
-                <CardContent className="p-8">
-                  <div className="flex items-center mb-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                    ))}
-                  </div>
-                  <p className="text-slate-300 mb-6">
-                    "Invest Nexus has transformed how I discover and invest in projects. The platform is intuitive,
-                    secure, and has connected me with opportunities I wouldn't have found elsewhere."
-                  </p>
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                      JD
-                    </div>
-                    <div className="ml-4">
-                      <p className="font-semibold text-white">James Davidson</p>
-                      <p className="text-sm text-slate-400">Angel Investor</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-900/50 border-slate-800">
-                <CardContent className="p-8">
-                  <div className="flex items-center mb-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                    ))}
-                  </div>
-                  <p className="text-slate-300 mb-6">
-                    "As a startup founder, I was struggling to find the right investors. Invest Nexus not only connected
-                    us with aligned investors but also provided tools to showcase our vision effectively."
-                  </p>
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
-                      SL
-                    </div>
-                    <div className="ml-4">
-                      <p className="font-semibold text-white">Sarah Lin</p>
-                      <p className="text-sm text-slate-400">Tech Entrepreneur</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-slate-900/50 border-slate-800">
-                <CardContent className="p-8">
-                  <div className="flex items-center mb-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                    ))}
-                  </div>
-                  <p className="text-slate-300 mb-6">
-                    "The analytics and portfolio management tools are exceptional. I can track all my investments in
-                    real-time and make data-driven decisions. The platform security gives me peace of mind."
-                  </p>
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center text-white font-bold">
-                      MR
-                    </div>
-                    <div className="ml-4">
-                      <p className="font-semibold text-white">Michael Rodriguez</p>
-                      <p className="text-sm text-slate-400">Venture Capitalist</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing Section */}
-        <section id="pricing" className="py-20 px-4 bg-slate-900/30">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                Simple, Transparent Pricing
-              </h2>
-              <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Choose the plan that works for your investment or project needs
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Free Plan */}
-              <Card className="bg-slate-900/50 border-slate-800 overflow-hidden">
-                <div className="p-8">
-                  <h3 className="text-xl font-bold mb-2 text-white">Free</h3>
-                  <p className="text-slate-400 mb-6">Perfect for getting started</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-white">$0</span>
-                    <span className="text-slate-400">/month</span>
-                  </div>
-                  <ul className="space-y-3 mb-8">
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Basic project listings</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Limited investor connections</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Basic analytics</span>
-                    </li>
-                  </ul>
-                  <Link href="/auth/register">
-                    <Button
-                      variant="outline"
-                      className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
-                    >
-                      Get Started
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-
-              {/* Pro Plan */}
-              <Card className="bg-slate-900/50 border-cyan-600 overflow-hidden relative">
-                <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-cyan-600 to-blue-600 text-center py-1 text-white text-sm font-medium">
-                  Most Popular
-                </div>
-                <div className="p-8 pt-12">
-                  <h3 className="text-xl font-bold mb-2 text-white">Pro</h3>
-                  <p className="text-slate-400 mb-6">For serious investors & projects</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-white">$49</span>
-                    <span className="text-slate-400">/month</span>
-                  </div>
-                  <ul className="space-y-3 mb-8">
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Featured project listings</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Unlimited investor connections</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Advanced analytics & reporting</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Priority support</span>
-                    </li>
-                  </ul>
-                  <Link href="/auth/register">
-                    <Button className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500">
-                      Get Started
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-
-              {/* Enterprise Plan */}
-              <Card className="bg-slate-900/50 border-slate-800 overflow-hidden">
-                <div className="p-8">
-                  <h3 className="text-xl font-bold mb-2 text-white">Enterprise</h3>
-                  <p className="text-slate-400 mb-6">For investment firms & large projects</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-white">$199</span>
-                    <span className="text-slate-400">/month</span>
-                  </div>
-                  <ul className="space-y-3 mb-8">
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Premium project showcase</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">VIP investor introductions</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Custom analytics & API access</span>
-                    </li>
-                    <li className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-cyan-500 mr-2 shrink-0 mt-0.5" />
-                      <span className="text-slate-300">Dedicated account manager</span>
-                    </li>
-                  </ul>
-                  <Link href="/auth/register">
-                    <Button
-                      variant="outline"
-                      className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
-                    >
-                      Contact Sales
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA Section */}
-        <section className="py-20 px-4">
-          <div className="container mx-auto max-w-4xl text-center">
-            <div className="bg-gradient-to-r from-cyan-900/50 to-blue-900/50 rounded-2xl p-12 border border-cyan-800/50 relative overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,255,255,0.2),transparent_50%)]"></div>
-
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 relative z-10">
-                Ready to transform your investment journey?
-              </h2>
-              <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto relative z-10">
-                Join thousands of investors and project owners already using Invest Nexus to connect, invest, and
-                innovate.
-              </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
-                <Link href="/auth/register">
-                  <Button
-                    size="lg"
-                    className="text-lg px-8 py-6 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 w-full sm:w-auto"
-                  >
-                    Create Free Account <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link href="#features">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="text-lg px-8 py-6 border-cyan-700 text-slate-200 hover:bg-cyan-900/30 w-full sm:w-auto"
-                  >
-                    Learn More <ChevronRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-slate-900/70 border-t border-slate-800 py-12 px-4 relative z-10">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="font-bold text-white mb-4">Platform</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#features" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href="#pricing" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Security
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Roadmap
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-white mb-4">Resources</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Guides
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Support
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-white mb-4">Company</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Partners
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-white mb-4">Legal</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Privacy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Terms
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Security
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    Cookies
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <Hexagon className="h-6 w-6 text-cyan-500" />
-              <span className="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                INVEST NEXUS
-              </span>
-            </div>
-            <div className="text-slate-400 text-sm">
-              © {new Date().getFullYear()} Invest Nexus. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </footer>
+export default function InvestorDashboard() {
+  const { user } = useLayoutContext();
+  const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalInvestments, setTotalInvestments] = useState(12500000)
+  const [availableBalance, setAvailableBalance] = useState(7500000)
+  const [activeProjects, setActiveProjects] = useState(15)
+  const [unreadMessages, setUnreadMessages] = useState(4)
+  const setCurrentUser = () => {
+    setIsLoading(true)
+    setUserType(user.userType)
+    setIsLoading(false)
+  }
+  useEffect(() => {
+    setCurrentUser();
+  }, []);
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("fr-MG", {
+      style: "currency",
+      currency: "MGA",
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+  if (isLoading) {
+    <div className="flex flex-col items-center justify-center py-12">
+      <Loader className="h-8 w-8 text-cyan-500 animate-spin mb-4" />
+      <p className="text-slate-400">Loading ...</p>
     </div>
+  }
+  return (
+    <DashboardLayout userType={userType}>
+      <div className="grid gap-6">
+        {/* Financial Overview */}
+        <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm overflow-hidden">
+          <CardHeader className="border-b border-slate-700/50 pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-slate-100 flex items-center">
+                <Activity className="mr-2 h-5 w-5 text-cyan-500" />
+                {userType === "investor" ? "Investment Overview" : "Project Funding Overview"}
+              </CardTitle>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="bg-slate-800/50 text-cyan-400 border-cyan-500/50 text-xs">
+                  <div className="h-1.5 w-1.5 rounded-full bg-cyan-500 mr-1 animate-pulse"></div>
+                  LIVE
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {userType === "investor" ? (
+                <>
+                  <MetricCard
+                    title="Total Investments"
+                    value={formatCurrency(totalInvestments)}
+                    icon={DollarSign}
+                    trend="up"
+                    color="cyan"
+                    detail="8 Projects Supported"
+                  />
+                  <MetricCard
+                    title="Available Balance"
+                    value={formatCurrency(availableBalance)}
+                    icon={Wallet}
+                    trend="stable"
+                    color="purple"
+                    detail="Ready to Invest"
+                  />
+                  <MetricCard
+                    title="Return Rate"
+                    value="12.5%"
+                    icon={TrendingUp}
+                    trend="up"
+                    color="green"
+                    detail="Avg. Annual Return"
+                  />
+                </>
+              ) : (
+                <>
+                  <MetricCard
+                    title="Total Raised"
+                    value={formatCurrency(totalInvestments)}
+                    icon={DollarSign}
+                    trend="up"
+                    color="cyan"
+                    detail="Across 3 Projects"
+                  />
+                  <MetricCard
+                    title="Available Funds"
+                    value={formatCurrency(availableBalance)}
+                    icon={Wallet}
+                    trend="stable"
+                    color="purple"
+                    detail="Ready to Withdraw"
+                  />
+                  <MetricCard
+                    title="Funding Success"
+                    value="75%"
+                    icon={PieChart}
+                    trend="up"
+                    color="green"
+                    detail="Avg. Funding Rate"
+                  />
+                </>
+              )}
+            </div>
+
+            <div className="mt-8">
+              <Tabs defaultValue="performance" className="w-full">
+                <div className="flex items-center justify-between mb-4">
+                  <TabsList className="bg-slate-800/50 p-1">
+                    <TabsTrigger
+                      value="performance"
+                      className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
+                    >
+                      {userType === "investor" ? "Portfolio" : "Funding"}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="projects"
+                      className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
+                    >
+                      {userType === "investor" ? "Investments" : "Projects"}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="transactions"
+                      className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
+                    >
+                      Transactions
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <div className="flex items-center space-x-2 text-xs text-slate-400">
+                    <div className="flex items-center">
+                      <div className="h-2 w-2 rounded-full bg-cyan-500 mr-1"></div>
+                      Investments
+                    </div>
+                    <div className="flex items-center">
+                      <div className="h-2 w-2 rounded-full bg-purple-500 mr-1"></div>
+                      Returns
+                    </div>
+                  </div>
+                </div>
+
+                <TabsContent value="performance" className="mt-0">
+                  <div className="h-64 w-full relative bg-slate-800/30 rounded-lg border border-slate-700/50 overflow-hidden">
+                    <PerformanceChart />
+                    <div className="absolute bottom-4 right-4 bg-slate-900/80 backdrop-blur-sm rounded-md px-3 py-2 border border-slate-700/50">
+                      <div className="text-xs text-slate-400">
+                        {userType === "investor" ? "Portfolio Growth" : "Funding Progress"}
+                      </div>
+                      <div className="text-lg font-mono text-cyan-400">+18.5%</div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="projects" className="mt-0">
+                  {/* Project list would go here */}
+                </TabsContent>
+
+                <TabsContent value="transactions" className="mt-0">
+                  {/* Transaction list would go here */}
+                </TabsContent>
+              </Tabs>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Projects & Opportunities */}
+        <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-slate-100 flex items-center text-base">
+                <Briefcase className="mr-2 h-5 w-5 text-blue-500" />
+                {userType === "investor" ? "Investment Opportunities" : "Your Projects"}
+              </CardTitle>
+              {userType === "project-owner" && (
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8">
+                  <Plus className="mr-1 h-4 w-4" /> New Project
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" className="h-8 text-xs border-slate-700 bg-slate-800/50">
+                  <Filter className="mr-1 h-3 w-3" /> Filter
+                </Button>
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-[140px] h-8 text-xs bg-slate-800/50 border-slate-700">
+                    <SelectValue placeholder="All Sectors" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sectors</SelectItem>
+                    <SelectItem value="tech">Technology</SelectItem>
+                    <SelectItem value="energy">Green Energy</SelectItem>
+                    <SelectItem value="health">Healthcare</SelectItem>
+                    <SelectItem value="agri">Agriculture</SelectItem>
+                    <SelectItem value="edu">Education</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-xs text-slate-400">
+                Showing {userType === "investor" ? activeProjects : "3"} projects
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {userType === "investor" ? (
+                <>
+                  <ProjectCard
+                    title="Sustainable Aquaculture Farm"
+                    sector="Agriculture"
+                    progress={42}
+                    target={15000000}
+                    raised={6300000}
+                    investors={18}
+                    daysLeft={12}
+                  />
+                  <ProjectCard
+                    title="AI-Powered Healthcare Assistant"
+                    sector="Technology"
+                    progress={78}
+                    target={8000000}
+                    raised={6240000}
+                    investors={35}
+                    daysLeft={5}
+                    featured
+                  />
+                  <ProjectCard
+                    title="Solar Panel Manufacturing"
+                    sector="Green Energy"
+                    progress={25}
+                    target={25000000}
+                    raised={6250000}
+                    investors={12}
+                    daysLeft={21}
+                  />
+                </>
+              ) : (
+                <>
+                  <ProjectCard
+                    title="Smart City Infrastructure"
+                    sector="Technology"
+                    progress={45}
+                    target={15000000}
+                    raised={6750000}
+                    investors={24}
+                    daysLeft={18}
+                    isOwner
+                  />
+                  <ProjectCard
+                    title="Renewable Energy Plant"
+                    sector="Green Energy"
+                    progress={28}
+                    target={12000000}
+                    raised={3360000}
+                    investors={15}
+                    daysLeft={25}
+                    isOwner
+                  />
+                  <ProjectCard
+                    title="Educational Platform"
+                    sector="Education"
+                    progress={100}
+                    target={3200000}
+                    raised={3200000}
+                    investors={42}
+                    daysLeft={0}
+                    isOwner
+                    completed
+                  />
+                </>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="border-t border-slate-700/50 pt-4 flex justify-center">
+            <Button variant="outline" className="border-slate-700 text-slate-400 hover:text-slate-100">
+              View All Projects
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Messages */}
+        <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-slate-100 flex items-center text-base">
+              <MessageSquare className="mr-2 h-5 w-5 text-blue-500" />
+              Recent Messages
+            </CardTitle>
+            <Badge variant="outline" className="bg-slate-800/50 text-blue-400 border-blue-500/50">
+              {unreadMessages} New
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <MessageItem
+                sender="Jean Dupont"
+                time="15:42:12"
+                message="I'm interested in your renewable energy project. Could we schedule a call to discuss the details?"
+                avatar="/placeholder.svg?height=40&width=40"
+                unread
+              />
+              <MessageItem
+                sender="Marie Laurent"
+                time="14:30:45"
+                message="Thanks for accepting my investment proposal. I've transferred the first installment as discussed."
+                avatar="/placeholder.svg?height=40&width=40"
+                unread
+              />
+              <MessageItem
+                sender="Ahmed Nasser"
+                time="12:15:33"
+                message="Our team reviewed your project documentation. We'd like to increase our investment if you can provide more details on the expansion plan."
+                avatar="/placeholder.svg?height=40&width=40"
+                unread
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="border-t border-slate-700/50 pt-4">
+            <div className="flex items-center w-full space-x-2">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              />
+              <Button size="icon" className="bg-blue-600 hover:bg-blue-700">
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+    </DashboardLayout>
   )
 }
 

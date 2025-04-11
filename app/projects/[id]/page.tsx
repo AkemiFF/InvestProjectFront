@@ -1,19 +1,18 @@
 "use client"
 
-import { Label } from "@/components/ui/label"
-
-import { useState } from "react"
-import Link from "next/link"
-import { useParams } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { projectsService } from "@/services/projects-service"
+import type { Project } from "@/types/projects"
 import {
   AlertCircle,
   ArrowLeft,
@@ -25,11 +24,13 @@ import {
   DollarSign,
   Download,
   ExternalLink,
+  Facebook,
   FileText,
   Heart,
   HelpCircle,
   Info,
   Link2,
+  Loader,
   MapPin,
   MessageSquare,
   Share2,
@@ -37,49 +38,71 @@ import {
   ThumbsUp,
   Users,
 } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import Link from "next/link"
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function ProjectDetailPage() {
+  const router = useRouter();
   const params = useParams()
   const projectId = params.id
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
   const [investmentAmount, setInvestmentAmount] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingProject, setIsLoadingProject] = useState(true)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [project, setProject] = useState<Project | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  // Sample project data
-  const project = {
-    id: projectId,
-    title: "AI-Powered Healthcare Assistant",
+  // Fetch project data
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        setIsLoadingProject(true)
+        if (typeof projectId === "string" || typeof projectId === "number") {
+          const response = await projectsService.getProjectById(projectId)
+          setProject(response.data)
+          console.log(response.data);
+        } else {
+          throw new Error("Invalid project ID")
+        }
+        setError(null)
+      } catch (err) {
+        console.error("Error fetching project:", err)
+        setError("Failed to load project details. Please try again later.")
+      } finally {
+        setIsLoadingProject(false)
+      }
+    }
+
+    if (projectId) {
+      fetchProject()
+    }
+  }, [projectId])
+
+  // Sample project data for fields not in the API response
+  const projectExtendedData = {
     shortDescription:
-      "An innovative AI solution that helps healthcare providers diagnose and treat patients more effectively, reducing costs and improving outcomes.",
+      "An innovative solution that helps businesses and individuals achieve their goals more effectively.",
     fullDescription:
-      "Our AI-Powered Healthcare Assistant is designed to revolutionize the healthcare industry by providing real-time diagnostic support, treatment recommendations, and patient monitoring. The system uses advanced machine learning algorithms trained on millions of medical records to assist healthcare professionals in making more accurate diagnoses and treatment plans.\n\nThe platform integrates seamlessly with existing electronic health record systems and can be accessed via web or mobile applications. It includes features such as symptom analysis, medical imaging interpretation, drug interaction checking, and personalized treatment recommendations based on patient history and the latest medical research.",
-    sector: "Technology",
+      "Our project is designed to revolutionize the industry by providing real-time support, recommendations, and monitoring. The system uses advanced algorithms to assist professionals in making more accurate decisions and plans.\n\nThe platform integrates seamlessly with existing systems and can be accessed via web or mobile applications. It includes features such as analysis, interpretation, interaction checking, and personalized recommendations based on history and the latest research.",
     location: "Antananarivo, Madagascar",
-    progress: 78,
-    target: 8000000,
-    raised: 6240000,
-    investors: 35,
-    daysLeft: 5,
-    featured: true,
     owner: {
-      name: "MedTech Innovations",
+      name: "Tech Innovations",
       image: "/placeholder.svg?height=40&width=40",
-      description:
-        "A leading healthcare technology company focused on developing AI solutions for the medical industry.",
+      description: "A leading technology company focused on developing innovative solutions for various industries.",
       projects: 3,
       successRate: 100,
     },
-    team: [
+    team_members: [
       {
         name: "Dr. Sarah Johnson",
-        role: "CEO & Medical Director",
+        role: "CEO & Director",
         image: "/placeholder.svg?height=40&width=40",
       },
       {
         name: "Alex Chen",
-        role: "CTO & AI Specialist",
+        role: "CTO & Specialist",
         image: "/placeholder.svg?height=40&width=40",
       },
       {
@@ -88,16 +111,14 @@ export default function ProjectDetailPage() {
         image: "/placeholder.svg?height=40&width=40",
       },
     ],
-    businessModel:
-      "Our business model is based on a subscription service for healthcare providers. We offer tiered pricing based on the size of the healthcare facility and the number of users. Additionally, we will generate revenue through partnerships with pharmaceutical companies for anonymized data insights.",
     marketAnalysis:
-      "The global healthcare AI market is projected to reach $45.2 billion by 2026, growing at a CAGR of 44.9%. There is increasing demand for AI solutions that can reduce healthcare costs while improving patient outcomes. Our target market includes hospitals, clinics, and individual healthcare practitioners.",
+      "The global market is projected to reach $45.2 billion by 2026, growing at a CAGR of 44.9%. There is increasing demand for solutions that can reduce costs while improving outcomes. Our target market includes businesses, organizations, and individual practitioners.",
     competitiveAdvantage:
-      "Unlike competitors who focus solely on diagnostic support or administrative automation, our solution provides comprehensive support across the entire patient care journey. Our proprietary algorithms have demonstrated 15% higher accuracy in diagnostic suggestions compared to leading competitors in blind tests.",
+      "Unlike competitors who focus solely on specific support or automation, our solution provides comprehensive support across the entire journey. Our proprietary algorithms have demonstrated 15% higher accuracy compared to leading competitors in blind tests.",
     useOfFunds:
-      "The funds raised will be allocated as follows:\n- 40% for AI model refinement and expansion\n- 25% for regulatory approvals and compliance\n- 20% for marketing and business development\n-   25% for regulatory approvals and compliance\n- 20% for marketing and business development\n- 15% for operational expenses and team expansion",
+      "The funds raised will be allocated as follows:\n- 40% for model refinement and expansion\n- 25% for regulatory approvals and compliance\n- 20% for marketing and business development\n- 15% for operational expenses and team_members expansion",
     risks:
-      "Key risks include regulatory challenges in different markets, competition from established healthcare technology providers, and potential data privacy concerns. We are mitigating these risks through proactive regulatory engagement, continuous innovation, and implementing robust data security measures that exceed industry standards.",
+      "Key risks include regulatory challenges in different markets, competition from established providers, and potential data privacy concerns. We are mitigating these risks through proactive regulatory engagement, continuous innovation, and implementing robust data security measures that exceed industry standards.",
     equity: "12",
     minimumInvestment: "100000",
     maximumInvestment: "1000000",
@@ -106,7 +127,7 @@ export default function ProjectDetailPage() {
     milestones: [
       {
         title: "Beta Testing Completion",
-        description: "Complete beta testing with 5 partner hospitals",
+        description: "Complete beta testing with 5 partner organizations",
         date: "Q1 2024",
         completed: true,
       },
@@ -134,13 +155,13 @@ export default function ProjectDetailPage() {
         date: "2023-11-10",
         title: "Beta Testing Results",
         content:
-          "We're excited to announce that our beta testing phase has been completed with outstanding results. Our AI system demonstrated a 92% accuracy rate in diagnostic suggestions, exceeding our initial targets by 12%.",
+          "We're excited to announce that our beta testing phase has been completed with outstanding results. Our system demonstrated a 92% accuracy rate, exceeding our initial targets by 12%.",
       },
       {
         date: "2023-10-25",
         title: "New Partnership Announcement",
         content:
-          "We've secured a strategic partnership with Central Hospital, one of the largest healthcare providers in Madagascar. This partnership will accelerate our development and provide valuable real-world testing opportunities.",
+          "We've secured a strategic partnership with a major organization in Madagascar. This partnership will accelerate our development and provide valuable real-world testing opportunities.",
       },
     ],
     comments: [
@@ -151,7 +172,7 @@ export default function ProjectDetailPage() {
         },
         date: "2023-11-12",
         content:
-          "This project has enormous potential to transform healthcare delivery in our region. I'm particularly impressed by the team's expertise and track record.",
+          "This project has enormous potential to transform the industry in our region. I'm particularly impressed by the team_members's expertise and track record.",
       },
       {
         user: {
@@ -160,7 +181,7 @@ export default function ProjectDetailPage() {
         },
         date: "2023-11-08",
         content:
-          "I've been following this team's work for some time, and their approach to AI in healthcare is truly innovative. Looking forward to seeing this project succeed!",
+          "I've been following this team_members's work for some time, and their approach is truly innovative. Looking forward to seeing this project succeed!",
       },
     ],
     documents: [
@@ -188,27 +209,52 @@ export default function ProjectDetailPage() {
   }
 
   // Format currency
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | string) => {
+    const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount
     return new Intl.NumberFormat("fr-MG", {
       style: "currency",
       currency: "MGA",
       maximumFractionDigits: 0,
-    }).format(amount)
+    }).format(numAmount)
   }
 
   const handleInvest = () => {
-    setIsLoading(true)
+    if (!investmentAmount || !projectId) return;
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      setShowSuccess(true)
+    // Rediriger vers la page de processus de paiement avec les paramètres nécessaires
+    router.push(`/projects/${projectId}/invest?amount=${investmentAmount}`);
+  };
 
-      // Hide success message after 5 seconds
-      setTimeout(() => {
-        setShowSuccess(false)
-      }, 5000)
-    }, 1500)
+  if (isLoadingProject) {
+    return (
+      <DashboardLayout userType={userType}>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader className="h-8 w-8 text-cyan-500 animate-spin mb-4" />
+          <p className="text-slate-400">Loading project details...</p>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (error || !project) {
+    return (
+      <DashboardLayout userType={userType}>
+        <div className="flex flex-col items-center justify-center py-12">
+          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-medium text-slate-300 mb-2">Error Loading Project</h3>
+          <p className="text-sm text-slate-500 max-w-md mb-6 text-center">
+            {error || "Unable to load project details. The project may not exist or there was a network error."}
+          </p>
+          <Button
+            variant="outline"
+            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+          </Button>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -238,12 +284,17 @@ export default function ProjectDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm overflow-hidden">
               <div className="relative h-64 bg-slate-800">
-                <img
-                  src={project.gallery[0] || "/placeholder.svg"}
-                  alt={project.title}
-                  className="w-full h-full object-cover"
-                />
-                {project.featured && (
+                {project.media.map((data, index) => (
+                  data.file_type === "image" && data.cover && (
+                    <img
+                      key={data.id}
+                      src={data.file_url || "/placeholder.svg"}
+                      alt={data.title}
+                      className="w-full h-full object-cover"
+                    />
+                  )))}
+
+                {project.is_featured && (
                   <div className="absolute top-0 right-0">
                     <div className="bg-cyan-500 text-xs font-medium px-2 py-0.5 text-black transform rotate-45 translate-x-6 translate-y-1">
                       Featured
@@ -272,24 +323,24 @@ export default function ProjectDetailPage() {
               <CardContent>
                 <div className="flex items-center justify-between mb-2">
                   <Badge variant="outline" className="bg-slate-800/50 text-slate-300 border-slate-600/50">
-                    {project.sector}
+                    {project.sector?.name || "Technology"}
                   </Badge>
                   <div className="text-xs text-slate-400 flex items-center">
-                    <Users className="h-3 w-3 mr-1" /> {project.investors} Investors
+                    <Users className="h-3 w-3 mr-1" /> {project.participants_count || 0} Investors
                   </div>
                 </div>
 
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1">
                     <div className="text-xs text-slate-400">
-                      {formatCurrency(project.raised)} of {formatCurrency(project.target)}
+                      {formatCurrency(project.amount_raised)} of {formatCurrency(project.amount_needed)}
                     </div>
-                    <div className="text-xs text-cyan-400">{project.progress}%</div>
+                    <div className="text-xs text-cyan-400">{project.progress || 0}%</div>
                   </div>
-                  <Progress value={project.progress} className="h-1.5 bg-slate-700">
+                  <Progress value={project.progress || 0} className="h-1.5 bg-slate-700">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
-                      style={{ width: `${project.progress}%` }}
+                      style={{ width: `${project.progress || 0}%` }}
                     />
                   </Progress>
                 </div>
@@ -297,21 +348,21 @@ export default function ProjectDetailPage() {
                 <div className="grid grid-cols-3 gap-2 mb-6">
                   <div className="bg-slate-800/50 rounded p-2 text-center">
                     <div className="text-xs text-slate-500 mb-1">Target</div>
-                    <div className="text-sm font-medium text-slate-300">{formatCurrency(project.target)}</div>
+                    <div className="text-sm font-medium text-slate-300">{formatCurrency(project.amount_needed)}</div>
                   </div>
                   <div className="bg-slate-800/50 rounded p-2 text-center">
                     <div className="text-xs text-slate-500 mb-1">Days Left</div>
                     <div className="text-sm font-medium text-slate-300 flex items-center justify-center">
-                      <Clock className="h-3 w-3 mr-1 text-amber-500" /> {project.daysLeft}
+                      <Clock className="h-3 w-3 mr-1 text-amber-500" /> {project.days_left || 0}
                     </div>
                   </div>
                   <div className="bg-slate-800/50 rounded p-2 text-center">
                     <div className="text-xs text-slate-500 mb-1">Return</div>
-                    <div className="text-sm font-medium text-slate-300">{project.expectedReturn}%</div>
+                    <div className="text-sm font-medium text-slate-300">{project.expected_return}%</div>
                   </div>
                 </div>
 
-                <p className="text-slate-300 mb-4">{project.shortDescription}</p>
+                <p className="text-slate-300 mb-4">{project.short_description}</p>
               </CardContent>
             </Card>
 
@@ -330,7 +381,7 @@ export default function ProjectDetailPage() {
                   Financials
                 </TabsTrigger>
                 <TabsTrigger
-                  value="team"
+                  value="team_members"
                   className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
                 >
                   Team
@@ -356,45 +407,65 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4 text-slate-300">
-                      {project.fullDescription.split("\n\n").map((paragraph, index) => (
+                      {project.description?.split("\n\n").map((paragraph, index) => (
                         <p key={index}>{paragraph}</p>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Business Model</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4 text-slate-300">
-                      <p>{project.businessModel}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {project.business_model && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Business Model</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4 text-slate-300">
+                        <p>{project.business_model}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Market Analysis</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4 text-slate-300">
-                      <p>{project.marketAnalysis}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {project.financial_projections && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Business Model</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4 text-slate-300">
+                        <p>{project.financial_projections}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Competitive Advantage</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4 text-slate-300">
-                      <p>{project.competitiveAdvantage}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {project.market_analysis && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Market Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4 text-slate-300">
+                        <p>{project.market_analysis}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {project.competitive_advantage && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Competitive Advantage</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4 text-slate-300">
+                        <p>{project.competitive_advantage}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
 
                 <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
                   <CardHeader className="pb-2">
@@ -402,7 +473,7 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {project.milestones.map((milestone, index) => (
+                      {projectExtendedData.milestones.map((milestone, index) => (
                         <div key={index} className="flex items-start">
                           <div
                             className={`h-6 w-6 rounded-full flex items-center justify-center mt-0.5 mr-3 ${milestone.completed ? "bg-green-900/30 text-green-500" : "bg-blue-900/30 text-blue-500"}`}
@@ -428,15 +499,16 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {project.gallery.map((image, index) => (
-                        <div key={index} className="rounded-md overflow-hidden border border-slate-700">
-                          <img
-                            src={image || "/placeholder.svg"}
-                            alt={`Project image ${index + 1}`}
-                            className="w-full h-40 object-cover"
-                          />
-                        </div>
-                      ))}
+                      {project.media.map((data, index) => (
+                        data.file_type === "image" && (
+                          <div key={data.id} className="rounded-md overflow-hidden border border-slate-700">
+                            <img
+                              src={data.file_url || "/placeholder.svg"}
+                              alt={`Project image ${index + 1}`}
+                              className="w-full h-40 object-cover"
+                            />
+                          </div>
+                        )))}
                     </div>
                   </CardContent>
                 </Card>
@@ -447,26 +519,35 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {project.documents.map((doc, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-3 bg-slate-800/50 rounded-md border border-slate-700/50"
-                        >
-                          <div className="flex items-center">
-                            <div className="h-8 w-8 rounded bg-slate-700 flex items-center justify-center mr-3">
-                              <FileText className="h-4 w-4 text-slate-300" />
+                      {project.media.map(
+                        (doc, index) =>
+                          (doc.file_type === "pdf" || doc.file_type === "doc") && (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-3 bg-slate-800/50 rounded-md border border-slate-700/50"
+                            >
+                              <div className="flex items-center">
+                                <div className="h-8 w-8 rounded bg-slate-700 flex items-center justify-center mr-3">
+                                  <FileText className="h-4 w-4 text-slate-300" />
+                                </div>
+                                <div>
+                                  <p className="text-sm text-slate-300">{doc.title}</p>
+                                  {/* <p className="text-xs text-slate-500">{doc.size}</p> */}
+                                </div>
+                              </div>
+                              <a
+                                href={doc.file_url}
+                                download
+                                className="inline-flex items-center text-sm px-3 h-8 border border-slate-700 rounded-md text-slate-300 hover:bg-slate-800 transition"
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </a>
                             </div>
-                            <div>
-                              <p className="text-sm text-slate-300">{doc.name}</p>
-                              <p className="text-xs text-slate-500">{doc.size}</p>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm" className="h-8 border-slate-700 hover:bg-slate-800">
-                            <Download className="h-4 w-4 mr-1" /> Download
-                          </Button>
-                        </div>
-                      ))}
+                          )
+                      )}
                     </div>
+
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -492,7 +573,7 @@ export default function ProjectDetailPage() {
                           <Target className="h-5 w-5 text-cyan-500 mr-2" />
                           <h3 className="text-sm font-medium text-slate-200">Expected Return</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-100">{project.expectedReturn}%</p>
+                        <p className="text-2xl font-bold text-slate-100">{project.expected_return}%</p>
                         <p className="text-xs text-slate-500 mt-1">Projected annual return on investment</p>
                       </div>
 
@@ -501,7 +582,7 @@ export default function ProjectDetailPage() {
                           <Calendar className="h-5 w-5 text-cyan-500 mr-2" />
                           <h3 className="text-sm font-medium text-slate-200">Return Timeline</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-100">{project.returnTimeline} months</p>
+                        <p className="text-2xl font-bold text-slate-100">{project.return_timeline} months</p>
                         <p className="text-xs text-slate-500 mt-1">Estimated time to realize returns</p>
                       </div>
 
@@ -511,8 +592,8 @@ export default function ProjectDetailPage() {
                           <h3 className="text-sm font-medium text-slate-200">Investment Range</h3>
                         </div>
                         <p className="text-2xl font-bold text-slate-100">
-                          {formatCurrency(Number.parseInt(project.minimumInvestment))} -{" "}
-                          {formatCurrency(Number.parseInt(project.maximumInvestment))}
+                          {formatCurrency(Number.parseInt(project.minimum_investment))} -{" "}
+                          {formatCurrency(Number.parseInt(project.amount_needed) - Number.parseInt(project.amount_raised))}
                         </p>
                         <p className="text-xs text-slate-500 mt-1">Min and max investment amounts</p>
                       </div>
@@ -526,7 +607,7 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4 text-slate-300">
-                      {project.useOfFunds.split("\n").map((item, index) => (
+                      {(project.use_of_funds ?? "").split("\n").map((item, index) => (
                         <div key={index} className="flex items-start">
                           <div className="h-5 w-5 rounded-full bg-slate-800 flex items-center justify-center mt-0.5 mr-2">
                             <Check className="h-3 w-3 text-cyan-500" />
@@ -556,7 +637,7 @@ export default function ProjectDetailPage() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="team" className="space-y-6">
+              <TabsContent value="team_members" className="space-y-6">
                 <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-slate-100 text-lg">Project Owner</CardTitle>
@@ -565,23 +646,32 @@ export default function ProjectDetailPage() {
                     <div className="flex flex-col md:flex-row items-start gap-6">
                       <div className="flex-shrink-0">
                         <Avatar className="h-20 w-20">
-                          <AvatarImage src={project.owner.image} alt={project.owner.name} />
+                          <AvatarImage
+                            src={project.owner?.profile_picture ?? "/placeholder.svg"}
+                            alt={project.owner?.username}
+                          />
                           <AvatarFallback className="bg-slate-700 text-cyan-500">
-                            {project.owner.name.charAt(0)}
+                            {(project.owner?.username).charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-medium text-slate-100 mb-1">{project.owner.name}</h3>
-                        <p className="text-sm text-slate-400 mb-3">{project.owner.description}</p>
+                        <h3 className="text-lg font-medium text-slate-100 mb-1">
+                          {project.owner?.username}
+                        </h3>
+                        <p className="text-sm text-slate-400 mb-3">
+                          {project.owner?.biography}
+                        </p>
                         <div className="flex items-center space-x-4 text-sm">
                           <div className="flex items-center">
                             <Briefcase className="h-4 w-4 text-slate-500 mr-1" />
-                            <span className="text-slate-300">{project.owner.projects} Projects</span>
+                            <span className="text-slate-300">{projectExtendedData.owner.projects} Projects</span>
                           </div>
                           <div className="flex items-center">
                             <ThumbsUp className="h-4 w-4 text-slate-500 mr-1" />
-                            <span className="text-slate-300">{project.owner.successRate}% Success Rate</span>
+                            <span className="text-slate-300">
+                              {projectExtendedData.owner.successRate}% Success Rate
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -589,30 +679,43 @@ export default function ProjectDetailPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Team Members</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {project.team.map((member, index) => (
-                        <div
-                          key={index}
-                          className="bg-slate-800/50 rounded-md p-4 border border-slate-700/50 flex flex-col items-center text-center"
-                        >
-                          <Avatar className="h-16 w-16 mb-3">
-                            <AvatarImage src={member.image} alt={member.name} />
-                            <AvatarFallback className="bg-slate-700 text-cyan-500">
-                              {member.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <h4 className="text-sm font-medium text-slate-200 mb-1">{member.name}</h4>
-                          <p className="text-xs text-slate-400">{member.role}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                {project.team_members && project.team_members.length > 0 && (
+                  <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-slate-100 text-lg">Team datas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {project.team_members.map((member, index) => (
+                          <div
+                            key={index}
+                            className="bg-slate-800/50 rounded-md p-4 border border-slate-700/50 flex flex-col items-center text-center"
+                          >
+                            <Avatar className="h-16 w-16 mb-3">
+                              <AvatarImage src={member.photo} alt={member.name} />
+                              <AvatarFallback className="bg-slate-700 text-cyan-500">
+                                {member.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <h4 className="text-sm font-medium text-slate-200 mb-1">{member.name}</h4>
+                            <p className="text-xs text-slate-400">{member.role}</p>
+                            <a
+                              href={member.facebook_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1 text-xs font-medium text-cyan-400 border border-cyan-500 rounded-full hover:bg-cyan-500/10 transition"
+                            >
+                              <Facebook className="w-3 h-3 mr-1" />
+                              Facebook
+                            </a>
+
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
               </TabsContent>
 
               <TabsContent value="updates" className="space-y-6">
@@ -622,7 +725,7 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {project.updates.map((update, index) => (
+                      {projectExtendedData.updates.map((update, index) => (
                         <div key={index} className="bg-slate-800/50 rounded-md p-4 border border-slate-700/50">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-sm font-medium text-slate-200">{update.title}</h4>
@@ -643,7 +746,7 @@ export default function ProjectDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {project.comments.map((comment, index) => (
+                      {projectExtendedData.comments.map((comment, index) => (
                         <div key={index} className="bg-slate-800/50 rounded-md p-4 border border-slate-700/50">
                           <div className="flex items-start">
                             <Avatar className="h-8 w-8 mr-3">
@@ -705,18 +808,39 @@ export default function ProjectDetailPage() {
                       <Input
                         id="investmentAmount"
                         type="number"
-                        placeholder={project.minimumInvestment}
+                        placeholder={project.minimum_investment}
                         className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
                         value={investmentAmount}
-                        onChange={(e) => setInvestmentAmount(e.target.value)}
+                        onChange={(e) => {
+                          // Permet de taper n'importe quelle valeur temporairement
+                          setInvestmentAmount(e.target.value);
+                        }}
+                        onBlur={() => {
+                          const value = Number(investmentAmount);
+                          const min = Number(project.minimum_investment);
+                          const max = Number(project.maximum_investment);
+
+                          // Si la valeur n'est pas un nombre valide, on réinitialise au minimum
+                          if (isNaN(value)) {
+                            setInvestmentAmount(min.toString());
+                            return;
+                          }
+
+                          // Ajuste la valeur si elle est en dehors des limites
+                          if (value < min) {
+                            setInvestmentAmount(min.toString());
+                          } else if (value > max) {
+                            setInvestmentAmount(max.toString());
+                          }
+                        }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">
-                        Min: {formatCurrency(Number.parseInt(project.minimumInvestment))}
+                        Min: {formatCurrency(Number.parseInt(project.minimum_investment))}
                       </span>
                       <span className="text-slate-500">
-                        Max: {formatCurrency(Number.parseInt(project.maximumInvestment))}
+                        Max: {formatCurrency(Number.parseInt(project.maximum_investment))}
                       </span>
                     </div>
                   </div>
@@ -745,16 +869,21 @@ export default function ProjectDetailPage() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-slate-300">Potential Return ({project.expectedReturn}%)</div>
+                      <div className="text-sm text-slate-300">
+                        Potential Return ({project.expected_return}%)
+                      </div>
                       <div className="text-sm font-medium text-green-400">
                         {investmentAmount
                           ? formatCurrency(
-                              Number.parseInt(investmentAmount) * (1 + Number.parseInt(project.expectedReturn) / 100),
-                            )
+                            Number.parseInt(investmentAmount) *
+                            (1 + Number.parseInt(String(project.expected_return)) / 100),
+                          )
                           : "0 MGA"}
                       </div>
                     </div>
-                    <div className="text-xs text-slate-500">Estimated return after {project.returnTimeline} months</div>
+                    <div className="text-xs text-slate-500">
+                      Estimated return after {project.return_timeline} months
+                    </div>
                   </div>
 
                   <Button
@@ -790,29 +919,29 @@ export default function ProjectDetailPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Funding Progress</span>
-                    <span className="text-sm text-slate-300">{project.progress}%</span>
+                    <span className="text-sm text-slate-300">{project.progress || 0}%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Investors</span>
-                    <span className="text-sm text-slate-300">{project.investors}</span>
+                    <span className="text-sm text-slate-300">{project.participants_count || 0}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Days Left</span>
-                    <span className="text-sm text-slate-300">{project.daysLeft}</span>
+                    <span className="text-sm text-slate-300">{project.days_left || 0}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Minimum Investment</span>
                     <span className="text-sm text-slate-300">
-                      {formatCurrency(Number.parseInt(project.minimumInvestment))}
+                      {formatCurrency(Number.parseInt(project.minimum_investment))}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Expected Return</span>
-                    <span className="text-sm text-slate-300">{project.expectedReturn}%</span>
+                    <span className="text-sm text-slate-300">{project.expected_return}%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Return Timeline</span>
-                    <span className="text-sm text-slate-300">{project.returnTimeline} months</span>
+                    <span className="text-sm text-slate-300">{project.return_timeline} months</span>
                   </div>
                 </div>
               </CardContent>

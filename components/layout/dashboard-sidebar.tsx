@@ -3,13 +3,12 @@
 import { StatusItem } from "@/components/dashboard/status-item"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Briefcase, Command, FileText, Heart, MessageSquare, Settings, Shield, Users, Wallet, Zap } from "lucide-react"
+import { Briefcase, Command, FileText, Heart, Logs, MessageSquare, Settings, Shield, Users, Wallet, Zap } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type React from "react"
-import { useState } from "react"
-
+import { useEffect, useState } from "react"
+const adminName = "admin"
 // Configuration des liens
 const routeConfig = {
   common: {
@@ -19,9 +18,13 @@ const routeConfig = {
     Settings: "/profile"
   },
   admin: {
-    "User Management": "/users",
-    Moderation: "/moderation",
-    Support: "/centre-aide"
+    Dashboard: "/admin",
+    "User Management": `/${adminName}/users`,
+    "Projects Management": `/${adminName}/projects`,
+    Moderation: `/${adminName}/moderation`,
+    Logs: `/${adminName}/logs`,
+    Support: `/${adminName}/centre-aide`,
+    Settings: `/${adminName}/settings`
   },
   user: {
     Network: "/contacts",
@@ -59,12 +62,16 @@ interface DashboardSidebarProps {
 }
 
 export function DashboardSidebar({ userType: initialUserType }: DashboardSidebarProps) {
-  const [userType, setUserType] = useState(initialUserType)
+  const [userType, setUserTp] = useState("")
+
+  useEffect(() => {
+    setUserTp(initialUserType)
+  }, []);
 
   return (
     <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm h-full">
       <CardContent className="p-4">
-        {userType !== "admin" && (
+        {/* {userType !== "admin" && (
           <div className="mb-6">
             <Select
               defaultValue={userType}
@@ -79,23 +86,32 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
               </SelectContent>
             </Select>
           </div>
-        )}
+        )} */}
 
         <nav className="space-y-2">
-          <NavItem
-            icon={Command}
-            label="Dashboard"
-            href={routeConfig.common.Dashboard}
-          />
+          {userType !== "admin" ? (
+            <NavItem
+              icon={Command}
+              label="Dashboard"
+              href={routeConfig.common.Dashboard}
+            />
+          ) : (
+            <NavItem
+              icon={Command}
+              label="Dashboard"
+              href={routeConfig.admin.Dashboard}
+            />
+          )
+          }
 
           {userType === "admin" ? (
             <>
               <NavItem icon={Users} label="User Management" href={routeConfig.admin["User Management"]} />
-              <NavItem icon={Briefcase} label="Projects" href={routeConfig.common.Projects} />
+              <NavItem icon={Briefcase} label="Projects" href={routeConfig.admin["Projects Management"]} />
               <NavItem icon={Shield} label="Moderation" href={routeConfig.admin.Moderation} />
-              <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} />
+              <NavItem icon={Logs} label="Logs" href={routeConfig.admin.Logs} />
               <NavItem icon={MessageSquare} label="Support" href={routeConfig.admin.Support} />
-              <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />
+              <NavItem icon={Settings} label="Settings" href={routeConfig.admin.Settings} />
             </>
           ) : (
             <>
