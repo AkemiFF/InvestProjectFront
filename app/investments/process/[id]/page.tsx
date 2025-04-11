@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,36 +38,71 @@ import {
   Timer,
   Wallet,
 } from "lucide-react"
+import { projectsService } from "@/services/projects-service"
+import type { Project } from "@/types/projects"
+import type { InvestmentCreateData } from "@/types/investments";
+import { investmentsService } from "@/services/investments-service";
+import { useParams } from "next/navigation"
 
 export default function InvestmentProcessPage() {
   const router = useRouter()
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
   const [currentStep, setCurrentStep] = useState(1)
+  const params = useParams()
+  const searchParams = useSearchParams();
+  const amount = searchParams.get('amount');
+  const projectId = params.id;
   const [isLoading, setIsLoading] = useState(false)
   const [investmentComplete, setInvestmentComplete] = useState(false)
+  const [isLoadingProject, setIsLoadingProject] = useState(true)
+  const [project, setProject] = useState<Project | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
 
   // Sample project data
-  const project = {
-    id: 1,
-    title: "AI-Powered Healthcare Assistant",
-    sector: "Technology",
-    location: "Antananarivo, Madagascar",
-    progress: 78,
-    target: 8000000,
-    raised: 6240000,
-    investors: 35,
-    daysLeft: 5,
-    minInvestment: 100000,
-    maxInvestment: 1000000,
-    returnRate: 22,
-    returnPeriod: 36,
-    description:
-      "An innovative AI solution that helps healthcare providers diagnose and treat patients more effectively, reducing costs and improving outcomes.",
-  }
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        setIsLoadingProject(true)
+        if (typeof projectId === "string" || typeof projectId === "number") {
+          const response = await projectsService.getProjectById(projectId)
+          setProject(response.data)
+          console.log(response.data);
+        } else {
+          throw new Error("Invalid project ID")
+        }
+        setError(null)
+      } catch (err) {
+        console.error("Error fetching project:", err)
+        setError("Failed to load project details. Please try again later.")
+      } finally {
+        setIsLoadingProject(false)
+      }
+    }
+
+    if (projectId) {
+      fetchProject()
+    }
+  }, [projectId])
+
+  useEffect(() => {
+    if (project && amount) {
+      const numAmount = Number(amount);
+      const min = Number(project.minimum_investment);
+      const max = Number(project.maximum_investment);
+
+      if (numAmount < min) {
+        setError(`Le montant minimum est ${formatCurrency(min)}`);
+      } else if (numAmount > max) {
+        setError(`Le montant maximum est ${formatCurrency(max)}`);
+      }
+    }
+  }, [project, amount]);
 
   // Form state
   const [formData, setFormData] = useState({
-    amount: project.minInvestment.toString(),
+    amount: amount ? amount.toString() : "",
     paymentMethod: "wallet",
     termsAccepted: false,
     riskAccepted: false,
@@ -92,7 +127,9 @@ export default function InvestmentProcessPage() {
   // Calculate expected return
   const calculateReturn = () => {
     const amount = Number.parseInt(formData.amount)
-    return amount * (project.returnRate / 100)
+    return project && project.expected_return !== undefined
+      ? amount * (project.expected_return / 100)
+      : 0
   }
 
   // Format currency
@@ -143,11 +180,16 @@ export default function InvestmentProcessPage() {
           <Link href="/projects" className="hover:text-slate-300 flex items-center">
             <ArrowLeft className="mr-1 h-4 w-4" /> Back to Projects
           </Link>
-          <ChevronRight className="h-4 w-4" />
-          <Link href={`/projects/${project.id}`} className="hover:text-slate-300">
-            {project.title}
-          </Link>
-          <ChevronRight className="h-4 w-4" />
+          {project && (
+            <>
+              <ChevronRight className="h-4 w-4" />
+              <Link href={`/projects/${project.id}`} className="hover:text-slate-300">
+                {project.title}
+              </Link>
+              <ChevronRight className="h-4 w-4" />
+            </>
+          )}
+
           <span className="text-slate-300">Invest</span>
         </div>
 
@@ -160,7 +202,7 @@ export default function InvestmentProcessPage() {
                 </div>
                 <h2 className="text-xl font-bold text-slate-100">Investment Successful!</h2>
                 <p className="text-slate-400 text-center max-w-md">
-                  Your investment of {formatCurrency(Number.parseInt(formData.amount))} in {project.title} has been
+                  Your investment of {formatCurrency(Number.parseInt(formData.amount))} in {project?.title || "the project"} has been
                   processed successfully.
                 </p>
                 <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50 w-full max-w-md">
@@ -176,7 +218,7 @@ export default function InvestmentProcessPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Return Period</span>
-                    <span className="text-sm font-medium text-slate-200">{project.returnPeriod} months</span>
+                    <span className="text-sm font-medium text-slate-200">{project?.return_timeline ?? "N/A"} months</span>
                   </div>
                 </div>
                 <p className="text-slate-500 text-sm">Redirecting to your investment dashboard...</p>
@@ -193,9 +235,12 @@ export default function InvestmentProcessPage() {
                     <CardTitle className="text-slate-100">Investment Process</CardTitle>
                     <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30">Step {currentStep} of 4</Badge>
                   </div>
-                  <CardDescription className="text-slate-400">
-                    Complete the steps below to invest in {project.title}
+                  {(project) && (<CardDescription className="text-slate-400">
+                    Complete the steps below to invest in {project?.title || "this project"}
                   </CardDescription>
+
+                  )}
+
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
@@ -207,13 +252,12 @@ export default function InvestmentProcessPage() {
                         {[1, 2, 3, 4].map((step) => (
                           <div
                             key={step}
-                            className={`h-6 w-6 rounded-full flex items-center justify-center ${
-                              step < currentStep
-                                ? "bg-cyan-500 text-black"
-                                : step === currentStep
-                                  ? "bg-cyan-900 border-2 border-cyan-500 text-cyan-500"
-                                  : "bg-slate-800 text-slate-500"
-                            }`}
+                            className={`h-6 w-6 rounded-full flex items-center justify-center ${step < currentStep
+                              ? "bg-cyan-500 text-black"
+                              : step === currentStep
+                                ? "bg-cyan-900 border-2 border-cyan-500 text-cyan-500"
+                                : "bg-slate-800 text-slate-500"
+                              }`}
                           >
                             {step < currentStep ? (
                               <Check className="h-3 w-3" />
@@ -247,14 +291,18 @@ export default function InvestmentProcessPage() {
                             className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
                             value={formData.amount}
                             onChange={handleChange}
-                            min={project.minInvestment}
-                            max={project.maxInvestment}
+                            min={project?.minimum_investment || 0}
+                            max={project?.maximum_investment || 0}
                             required
                           />
                         </div>
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-500">Min: {formatCurrency(project.minInvestment)}</span>
-                          <span className="text-slate-500">Max: {formatCurrency(project.maxInvestment)}</span>
+                          <span className="text-slate-500">
+                            Min: {project ? formatCurrency(Number(project.minimum_investment)) : "N/A"}
+                          </span>
+                          <span className="text-slate-500">
+                            Max: {project ? formatCurrency(Number(project.maximum_investment)) : "N/A"}
+                          </span>
                         </div>
                       </div>
 
@@ -272,11 +320,11 @@ export default function InvestmentProcessPage() {
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-400">Return Rate</span>
-                            <span className="text-sm text-slate-300">{project.returnRate}%</span>
+                            <span className="text-sm text-slate-300">{project?.expected_return}%</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-400">Return Period</span>
-                            <span className="text-sm text-slate-300">{project.returnPeriod} months</span>
+                            <span className="text-sm text-slate-300">{project?.return_timeline} months</span>
                           </div>
                           <Separator className="my-2 bg-slate-700" />
                           <div className="flex items-center justify-between">
@@ -422,11 +470,13 @@ export default function InvestmentProcessPage() {
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-400">Project</span>
-                            <span className="text-sm text-slate-300">{project.title}</span>
+                            <span className="text-sm text-slate-300">{project?.title || "N/A"}</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-400">Sector</span>
-                            <span className="text-sm text-slate-300">{project.sector}</span>
+                            <span className="text-sm text-slate-300">
+                              {typeof project?.sector === "string" ? project.sector : project?.sector?.name || "N/A"}
+                            </span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-400">Investment Amount</span>
@@ -447,7 +497,7 @@ export default function InvestmentProcessPage() {
                           <Separator className="my-2 bg-slate-700" />
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-400">Return Rate</span>
-                            <span className="text-sm text-slate-300">{project.returnRate}%</span>
+                            <span className="text-sm text-slate-300">{project?.expected_return}%</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-400">Expected Return</span>
@@ -455,7 +505,7 @@ export default function InvestmentProcessPage() {
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-slate-400">Return Period</span>
-                            <span className="text-sm text-slate-300">{project.returnPeriod} months</span>
+                            <span className="text-sm text-slate-300">{project?.return_timeline} months</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-slate-300">Total Value</span>
@@ -516,7 +566,7 @@ export default function InvestmentProcessPage() {
                         <ThumbsUp className="h-4 w-4" />
                         <AlertTitle>Ready to Invest</AlertTitle>
                         <AlertDescription>
-                          You're about to invest {formatCurrency(Number.parseInt(formData.amount))} in {project.title}.
+                          You're about to invest {formatCurrency(Number.parseInt(formData.amount))} in {project?.title}.
                           Please confirm to complete your investment.
                         </AlertDescription>
                       </Alert>
@@ -608,29 +658,29 @@ export default function InvestmentProcessPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-medium text-slate-200 mb-1">{project.title}</h3>
+                      <h3 className="text-sm font-medium text-slate-200 mb-1">{project?.title}</h3>
                       <div className="flex items-center space-x-2 mb-2">
                         <Badge variant="outline" className="bg-slate-800/50 text-slate-300 border-slate-600/50 text-xs">
-                          {project.sector}
+                          {project?.sector.name}
                         </Badge>
                         <div className="text-xs text-slate-500 flex items-center">
-                          <MapPin className="h-3 w-3 mr-1" /> {project.location}
+                          <MapPin className="h-3 w-3 mr-1" /> {project?.location}
                         </div>
                       </div>
-                      <p className="text-xs text-slate-400 mb-3">{project.description}</p>
+                      <p className="text-xs text-slate-400 mb-3">{project?.short_description}</p>
                     </div>
 
                     <div className="mb-3">
                       <div className="flex items-center justify-between mb-1">
                         <div className="text-xs text-slate-400">
-                          {formatCurrency(project.raised)} of {formatCurrency(project.target)}
+                          {project && formatCurrency(Number(project.amount_raised))} of {project && formatCurrency(Number(project.amount_needed))}
                         </div>
-                        <div className="text-xs text-cyan-400">{project.progress}%</div>
+                        <div className="text-xs text-cyan-400">{project?.progress}%</div>
                       </div>
-                      <Progress value={project.progress} className="h-1.5 bg-slate-700">
+                      <Progress value={project?.progress} className="h-1.5 bg-slate-700">
                         <div
                           className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500"
-                          style={{ width: `${project.progress}%` }}
+                          style={{ width: `${project?.progress}%` }}
                         />
                       </Progress>
                     </div>
@@ -638,12 +688,12 @@ export default function InvestmentProcessPage() {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-slate-800/50 rounded p-2 text-center">
                         <div className="text-xs text-slate-500 mb-1">Investors</div>
-                        <div className="text-sm font-medium text-slate-300">{project.investors}</div>
+                        <div className="text-sm font-medium text-slate-300">{project?.owner.username}</div>
                       </div>
                       <div className="bg-slate-800/50 rounded p-2 text-center">
                         <div className="text-xs text-slate-500 mb-1">Days Left</div>
                         <div className="text-sm font-medium text-slate-300 flex items-center justify-center">
-                          <Timer className="h-3 w-3 mr-1 text-amber-500" /> {project.daysLeft}
+                          <Timer className="h-3 w-3 mr-1 text-amber-500" /> {project?.days_left}
                         </div>
                       </div>
                     </div>
@@ -651,15 +701,15 @@ export default function InvestmentProcessPage() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">Min. Investment</span>
-                        <span className="text-xs text-slate-300">{formatCurrency(project.minInvestment)}</span>
+                        <span className="text-xs text-slate-300">{project && formatCurrency(Number(project.minimum_investment))}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">Return Rate</span>
-                        <span className="text-xs text-green-400">{project.returnRate}%</span>
+                        <span className="text-xs text-green-400">{project?.expected_return}%</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-slate-500">Return Period</span>
-                        <span className="text-xs text-slate-300">{project.returnPeriod} months</span>
+                        <span className="text-xs text-slate-300">{project?.return_timeline} months</span>
                       </div>
                     </div>
                   </div>

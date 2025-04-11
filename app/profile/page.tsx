@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,85 +10,238 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Briefcase,
-  Building,
-  Globe,
-  Camera,
-  Upload,
-  Save,
-  AlertCircle,
-  Bell,
-  CreditCard,
-  Lock,
-  LogOut,
-  CheckCircle2,
-  Plus,
-} from "lucide-react"
+import { User, Mail, MapPin, Globe, Upload, Save, AlertCircle, Lock, CheckCircle2, Loader2 } from "lucide-react"
+import { userService, type User as UserType } from "@/services/user-service"
 
 export default function ProfilePage() {
-  const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
-  const [isLoading, setIsLoading] = useState(false)
+  // État pour stocker les données de l'utilisateur
+  const [user, setUser] = useState<UserType | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState("")
 
+  // État pour les formulaires
   const [personalInfo, setPersonalInfo] = useState({
-    fullName: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+261 34 12 345 67",
-    location: "Antananarivo, Madagascar",
-    bio: "Experienced investor with a focus on sustainable technology and renewable energy projects.",
-    occupation: "Financial Analyst",
-    company: "Global Investments Ltd",
-    website: "https://johndoe.com",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
+    occupation: "",
+    company: "",
+    website: "",
   })
 
+  // État pour le formulaire de mot de passe
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  })
+
+  // État pour les préférences d'investissement
+  const [investmentPreferences, setInvestmentPreferences] = useState({
+    riskTolerance: "medium" as "low" | "medium" | "high",
+    preferredCategories: [] as string[],
+    investmentGoals: [] as string[], // Ajout de cette propriété manquante
+    minInvestmentAmount: 5000000,
+    maxInvestmentAmount: 20000000,
+  })
+
+  // Charger les données de l'utilisateur au chargement du composant
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setIsLoading(true)
+        const userData = await userService.getCurrentUser()
+        setUser(userData)
+
+        // Initialiser les formulaires avec les données de l'utilisateur
+        setPersonalInfo({
+          firstName: userData.firstName || "",
+          lastName: userData.lastName || "",
+          email: userData.email || "",
+          phone: "", // Ce champ n'existe pas dans l'API
+          location: userData.location || "",
+          bio: userData.bio || "",
+          occupation: "", // Ce champ n'existe pas dans l'API
+          company: "", // Ce champ n'existe pas dans l'API
+          website: userData.website || "",
+        })
+
+        // Initialiser les préférences d'investissement
+        if (userData.investmentPreferences) {
+          setInvestmentPreferences({
+            riskTolerance: userData.investmentPreferences.riskTolerance || "medium",
+            preferredCategories: userData.investmentPreferences.preferredCategories || [],
+            investmentGoals: userData.investmentPreferences.investmentGoals || [], // Ajout de cette ligne
+            minInvestmentAmount: userData.investmentPreferences.minInvestmentAmount || 5000000,
+            maxInvestmentAmount: userData.investmentPreferences.maxInvestmentAmount || 20000000,
+          })
+        }
+      } catch (err) {
+        setError("Erreur lors du chargement des données utilisateur")
+        console.error("Erreur lors du chargement des données utilisateur:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [])
+
+  // Gérer les changements dans le formulaire d'informations personnelles
   const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setPersonalInfo((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSaveChanges = () => {
-    setIsLoading(true)
+  // Gérer les changements dans le formulaire de mot de passe
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setPasswordData((prev) => ({ ...prev, [name]: value }))
+  }
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      setSuccessMessage("Profile updated successfully")
+  // Gérer les changements dans les préférences d'investissement
+  const handleCategoryToggle = (category: string) => {
+    setInvestmentPreferences((prev) => {
+      const categories = [...prev.preferredCategories]
+      if (categories.includes(category)) {
+        return { ...prev, preferredCategories: categories.filter((c) => c !== category) }
+      } else {
+        return { ...prev, preferredCategories: [...categories, category] }
+      }
+    })
+  }
 
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage("")
-      }, 3000)
-    }, 1500)
+  // Enregistrer les modifications du profil
+  const handleSaveProfile = async () => {
+    try {
+      setIsUpdating(true)
+
+      // Préparer les données à envoyer à l'API
+      const userData: Partial<UserType> = {
+        firstName: personalInfo.firstName,
+        lastName: personalInfo.lastName,
+        bio: personalInfo.bio,
+        location: personalInfo.location,
+        website: personalInfo.website,
+      }
+
+      // Appeler l'API pour mettre à jour le profil
+      const updatedUser = await userService.updateProfile(userData)
+
+      // Mettre à jour l'état local avec les nouvelles données
+      setUser(updatedUser)
+
+      // Afficher un message de succès
+      setSuccessMessage("Profil mis à jour avec succès")
+      setTimeout(() => setSuccessMessage(""), 3000)
+    } catch (err) {
+      setError("Erreur lors de la mise à jour du profil")
+      console.error("Erreur lors de la mise à jour du profil:", err)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  // Enregistrer les modifications des préférences d'investissement
+  const handleSaveInvestmentPreferences = async () => {
+    try {
+      setIsUpdating(true)
+
+      // Appeler l'API pour mettre à jour les préférences d'investissement
+      const updatedUser = await userService.updateInvestmentPreferences(investmentPreferences)
+
+      // Mettre à jour l'état local avec les nouvelles données
+      setUser(updatedUser)
+
+      // Afficher un message de succès
+      setSuccessMessage("Préférences d'investissement mises à jour avec succès")
+      setTimeout(() => setSuccessMessage(""), 3000)
+    } catch (err) {
+      setError("Erreur lors de la mise à jour des préférences d'investissement")
+      console.error("Erreur lors de la mise à jour des préférences d'investissement:", err)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  // Mettre à jour le mot de passe
+  const handleUpdatePassword = async () => {
+    // Vérifier que les mots de passe correspondent
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError("Les nouveaux mots de passe ne correspondent pas")
+      return
+    }
+
+    try {
+      setIsUpdating(true)
+
+      // Appeler l'API pour mettre à jour le mot de passe
+      await userService.updatePassword(passwordData.currentPassword, passwordData.newPassword)
+
+      // Réinitialiser le formulaire
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      })
+
+      // Afficher un message de succès
+      setSuccessMessage("Mot de passe mis à jour avec succès")
+      setTimeout(() => setSuccessMessage(""), 3000)
+    } catch (err) {
+      setError("Erreur lors de la mise à jour du mot de passe")
+      console.error("Erreur lors de la mise à jour du mot de passe:", err)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <DashboardLayout userType={user?.role === "investor" ? "investor" : "project-owner"}>
+        <div className="flex items-center justify-center h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+          <span className="ml-2 text-slate-300">Chargement des données utilisateur...</span>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
-    <DashboardLayout userType={userType}>
+    <DashboardLayout userType={user?.role === "investor" ? "investor" : "project-owner"}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Profile Settings</h1>
-            <p className="text-slate-400">Manage your account settings and preferences</p>
+            <h1 className="text-2xl font-bold text-slate-100">Paramètres du profil</h1>
+            <p className="text-slate-400">Gérez vos paramètres de compte et préférences</p>
           </div>
 
           <Badge variant="outline" className="bg-slate-800/50 text-cyan-400 border-cyan-500/50">
-            {userType === "investor" ? "Investor Account" : "Project Owner Account"}
+            {user?.role === "investor" ? "Compte Investisseur" : "Compte Porteur de Projet"}
           </Badge>
         </div>
+
+        {error && (
+          <Alert className="bg-red-900/20 border-red-700/50 text-red-300">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erreur</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         {successMessage && (
           <Alert className="bg-green-900/20 border-green-700/50 text-green-300">
             <CheckCircle2 className="h-4 w-4" />
-            <AlertTitle>Success</AlertTitle>
+            <AlertTitle>Succès</AlertTitle>
             <AlertDescription>{successMessage}</AlertDescription>
           </Alert>
         )}
@@ -99,50 +252,47 @@ export default function ProfilePage() {
               value="personal"
               className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
             >
-              Personal Info
+              Informations Personnelles
             </TabsTrigger>
             <TabsTrigger
               value="security"
               className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
             >
-              Security
+              Sécurité
             </TabsTrigger>
             <TabsTrigger
-              value="notifications"
+              value="investment"
               className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
             >
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="payment" className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400">
-              Payment Methods
+              Préférences d'Investissement
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal" className="space-y-6">
             <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-slate-100">Profile Picture</CardTitle>
+                <CardTitle className="text-slate-100">Photo de Profil</CardTitle>
                 <CardDescription className="text-slate-400">
-                  This will be displayed on your profile and in comments
+                  Cette image sera affichée sur votre profil et dans les commentaires
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col md:flex-row items-center gap-6">
                   <Avatar className="h-24 w-24 border-2 border-slate-700">
-                    <AvatarImage src="/placeholder.svg?height=96&width=96" alt="User" />
-                    <AvatarFallback className="bg-slate-700 text-cyan-500 text-2xl">JD</AvatarFallback>
+                    <AvatarImage src={user?.avatar || "/placeholder.svg?height=96&width=96"} alt={user?.firstName} />
+                    <AvatarFallback className="bg-slate-700 text-cyan-500 text-2xl">
+                      {user?.firstName?.charAt(0)}
+                      {user?.lastName?.charAt(0)}
+                    </AvatarFallback>
                   </Avatar>
 
                   <div className="flex flex-col gap-4 w-full">
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
-                        <Camera className="mr-2 h-4 w-4" /> Take Photo
-                      </Button>
-                      <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
-                        <Upload className="mr-2 h-4 w-4" /> Upload Image
+                        <Upload className="mr-2 h-4 w-4" /> Télécharger une image
                       </Button>
                     </div>
-                    <p className="text-xs text-slate-500">Allowed formats: JPG, PNG, GIF. Maximum size: 2MB.</p>
+                    <p className="text-xs text-slate-500">Formats autorisés: JPG, PNG, GIF. Taille maximale: 2MB.</p>
                   </div>
                 </div>
               </CardContent>
@@ -150,20 +300,36 @@ export default function ProfilePage() {
 
             <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-slate-100">Personal Information</CardTitle>
-                <CardDescription className="text-slate-400">Update your personal details</CardDescription>
+                <CardTitle className="text-slate-100">Informations Personnelles</CardTitle>
+                <CardDescription className="text-slate-400">
+                  Mettez à jour vos informations personnelles
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
+                    <Label htmlFor="firstName">Prénom</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                       <Input
-                        id="fullName"
-                        name="fullName"
+                        id="firstName"
+                        name="firstName"
                         className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
-                        value={personalInfo.fullName}
+                        value={personalInfo.firstName}
+                        onChange={handlePersonalInfoChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Nom</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
+                        value={personalInfo.lastName}
                         onChange={handlePersonalInfoChange}
                       />
                     </div>
@@ -180,26 +346,14 @@ export default function ProfilePage() {
                         className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
                         value={personalInfo.email}
                         onChange={handlePersonalInfoChange}
+                        disabled
                       />
                     </div>
+                    <p className="text-xs text-slate-500">L'adresse email ne peut pas être modifiée.</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                      <Input
-                        id="phone"
-                        name="phone"
-                        className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
-                        value={personalInfo.phone}
-                        onChange={handlePersonalInfoChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
+                    <Label htmlFor="location">Localisation</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                       <Input
@@ -214,157 +368,50 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
+                  <Label htmlFor="bio">Biographie</Label>
                   <Textarea
                     id="bio"
                     name="bio"
                     className="min-h-[100px] bg-slate-800/50 border-slate-700 text-slate-100"
-                    placeholder="Tell us about yourself"
+                    placeholder="Parlez-nous de vous"
                     value={personalInfo.bio}
                     onChange={handlePersonalInfoChange}
                   />
                   <p className="text-xs text-slate-500">
-                    Brief description for your profile. This will be visible to other users.
+                    Brève description pour votre profil. Elle sera visible par les autres utilisateurs.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="occupation">Occupation</Label>
-                    <div className="relative">
-                      <Briefcase className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                      <Input
-                        id="occupation"
-                        name="occupation"
-                        className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
-                        value={personalInfo.occupation}
-                        onChange={handlePersonalInfoChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company</Label>
-                    <div className="relative">
-                      <Building className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                      <Input
-                        id="company"
-                        name="company"
-                        className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
-                        value={personalInfo.company}
-                        onChange={handlePersonalInfoChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="website">Website</Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                      <Input
-                        id="website"
-                        name="website"
-                        className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
-                        value={personalInfo.website}
-                        onChange={handlePersonalInfoChange}
-                      />
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website">Site Web</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                    <Input
+                      id="website"
+                      name="website"
+                      className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
+                      value={personalInfo.website}
+                      onChange={handlePersonalInfoChange}
+                    />
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end">
                 <Button
                   className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500"
-                  onClick={handleSaveChanges}
-                  disabled={isLoading}
+                  onClick={handleSaveProfile}
+                  disabled={isUpdating}
                 >
-                  {isLoading ? (
+                  {isUpdating ? (
                     <div className="flex items-center">
-                      <div className="h-4 w-4 border-2 border-slate-100 border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Saving...
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Enregistrement...
                     </div>
                   ) : (
                     <div className="flex items-center">
-                      <Save className="mr-2 h-4 w-4" /> Save Changes
+                      <Save className="mr-2 h-4 w-4" /> Enregistrer les modifications
                     </div>
                   )}
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Investment Preferences</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Set your investment interests and preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Preferred Investment Sectors</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    <Button
-                      variant="outline"
-                      className="justify-start border-cyan-500/30 bg-cyan-900/10 text-cyan-400 hover:bg-cyan-900/20"
-                    >
-                      Technology
-                    </Button>
-                    <Button variant="outline" className="justify-start border-slate-700 hover:bg-slate-800">
-                      Healthcare
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start border-cyan-500/30 bg-cyan-900/10 text-cyan-400 hover:bg-cyan-900/20"
-                    >
-                      Green Energy
-                    </Button>
-                    <Button variant="outline" className="justify-start border-slate-700 hover:bg-slate-800">
-                      Real Estate
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start border-cyan-500/30 bg-cyan-900/10 text-cyan-400 hover:bg-cyan-900/20"
-                    >
-                      Agriculture
-                    </Button>
-                    <Button variant="outline" className="justify-start border-slate-700 hover:bg-slate-800">
-                      Education
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="investmentRange">Investment Range</Label>
-                  <Select defaultValue="medium">
-                    <SelectTrigger className="bg-slate-800/50 border-slate-700">
-                      <SelectValue placeholder="Select investment range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small">Small (Under 5,000,000 MGA)</SelectItem>
-                      <SelectItem value="medium">Medium (5,000,000 - 20,000,000 MGA)</SelectItem>
-                      <SelectItem value="large">Large (20,000,000 - 50,000,000 MGA)</SelectItem>
-                      <SelectItem value="xlarge">Very Large (Over 50,000,000 MGA)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="riskTolerance">Risk Tolerance</Label>
-                  <Select defaultValue="moderate">
-                    <SelectTrigger className="bg-slate-800/50 border-slate-700">
-                      <SelectValue placeholder="Select risk tolerance" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="conservative">Conservative</SelectItem>
-                      <SelectItem value="moderate">Moderate</SelectItem>
-                      <SelectItem value="aggressive">Aggressive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500">
-                  <Save className="mr-2 h-4 w-4" /> Save Preferences
                 </Button>
               </CardFooter>
             </Card>
@@ -373,47 +420,56 @@ export default function ProfilePage() {
           <TabsContent value="security" className="space-y-6">
             <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-slate-100">Change Password</CardTitle>
+                <CardTitle className="text-slate-100">Changer le Mot de Passe</CardTitle>
                 <CardDescription className="text-slate-400">
-                  Update your password to keep your account secure
+                  Mettez à jour votre mot de passe pour sécuriser votre compte
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Label htmlFor="currentPassword">Mot de Passe Actuel</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                     <Input
                       id="currentPassword"
+                      name="currentPassword"
                       type="password"
                       className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
                       placeholder="••••••••"
+                      value={passwordData.currentPassword}
+                      onChange={handlePasswordChange}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
+                  <Label htmlFor="newPassword">Nouveau Mot de Passe</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                     <Input
                       id="newPassword"
+                      name="newPassword"
                       type="password"
                       className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
                       placeholder="••••••••"
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordChange}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Label htmlFor="confirmPassword">Confirmer le Nouveau Mot de Passe</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
                     <Input
                       id="confirmPassword"
+                      name="confirmPassword"
                       type="password"
                       className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100"
                       placeholder="••••••••"
+                      value={passwordData.confirmPassword}
+                      onChange={handlePasswordChange}
                     />
                   </div>
                 </div>
@@ -421,373 +477,163 @@ export default function ProfilePage() {
                 <Alert className="bg-slate-800/50 border-slate-700">
                   <AlertCircle className="h-4 w-4 text-slate-400" />
                   <AlertDescription className="text-slate-400">
-                    Password must be at least 8 characters and include a mix of letters, numbers, and special
-                    characters.
+                    Le mot de passe doit contenir au moins 8 caractères et inclure un mélange de lettres, chiffres et
+                    caractères spéciaux.
                   </AlertDescription>
                 </Alert>
               </CardContent>
               <CardFooter className="flex justify-end">
-                <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500">
-                  Update Password
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Two-Factor Authentication</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Add an extra layer of security to your account
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-sm font-medium text-slate-200">SMS Authentication</div>
-                    <div className="text-xs text-slate-400">Receive a code via SMS when signing in</div>
-                  </div>
-                  <Switch className="data-[state=checked]:bg-cyan-500" />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-sm font-medium text-slate-200">Authenticator App</div>
-                    <div className="text-xs text-slate-400">Use an authenticator app to generate codes</div>
-                  </div>
-                  <Switch className="data-[state=checked]:bg-cyan-500" />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-sm font-medium text-slate-200">Email Authentication</div>
-                    <div className="text-xs text-slate-400">Receive a code via email when signing in</div>
-                  </div>
-                  <Switch className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Account Security</CardTitle>
-                <CardDescription className="text-slate-400">Manage your account security settings</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-sm font-medium text-slate-200">Login Notifications</div>
-                    <div className="text-xs text-slate-400">Receive notifications for new logins to your account</div>
-                  </div>
-                  <Switch className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-sm font-medium text-slate-200">Suspicious Activity Alerts</div>
-                    <div className="text-xs text-slate-400">Get alerts for suspicious account activity</div>
-                  </div>
-                  <Switch className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                </div>
-
-                <Button variant="destructive" className="mt-4">
-                  <LogOut className="mr-2 h-4 w-4" /> Sign Out From All Devices
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="notifications" className="space-y-6">
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Notification Preferences</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Choose how and when you want to be notified
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-slate-200 flex items-center">
-                    <Bell className="mr-2 h-4 w-4 text-cyan-500" /> Email Notifications
-                  </h3>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="email-projects" className="flex-1 cursor-pointer">
-                        New project opportunities
-                      </Label>
-                      <Switch id="email-projects" className="data-[state=checked]:bg-cyan-500" defaultChecked />
+                <Button
+                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500"
+                  onClick={handleUpdatePassword}
+                  disabled={
+                    isUpdating ||
+                    !passwordData.currentPassword ||
+                    !passwordData.newPassword ||
+                    !passwordData.confirmPassword
+                  }
+                >
+                  {isUpdating ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Mise à jour...
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="email-investments" className="flex-1 cursor-pointer">
-                        Investment updates
-                      </Label>
-                      <Switch id="email-investments" className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="email-messages" className="flex-1 cursor-pointer">
-                        New messages
-                      </Label>
-                      <Switch id="email-messages" className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="email-newsletter" className="flex-1 cursor-pointer">
-                        Platform newsletter
-                      </Label>
-                      <Switch id="email-newsletter" className="data-[state=checked]:bg-cyan-500" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-slate-200 flex items-center">
-                    <Bell className="mr-2 h-4 w-4 text-cyan-500" /> Push Notifications
-                  </h3>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="push-projects" className="flex-1 cursor-pointer">
-                        New project opportunities
-                      </Label>
-                      <Switch id="push-projects" className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="push-investments" className="flex-1 cursor-pointer">
-                        Investment updates
-                      </Label>
-                      <Switch id="push-investments" className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="push-messages" className="flex-1 cursor-pointer">
-                        New messages
-                      </Label>
-                      <Switch id="push-messages" className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="push-reminders" className="flex-1 cursor-pointer">
-                        Payment reminders
-                      </Label>
-                      <Switch id="push-reminders" className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-slate-200 flex items-center">
-                    <Bell className="mr-2 h-4 w-4 text-cyan-500" /> SMS Notifications
-                  </h3>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="sms-security" className="flex-1 cursor-pointer">
-                        Security alerts
-                      </Label>
-                      <Switch id="sms-security" className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="sms-payments" className="flex-1 cursor-pointer">
-                        Payment confirmations
-                      </Label>
-                      <Switch id="sms-payments" className="data-[state=checked]:bg-cyan-500" defaultChecked />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500">
-                  Save Preferences
+                  ) : (
+                    "Mettre à jour le mot de passe"
+                  )}
                 </Button>
               </CardFooter>
             </Card>
           </TabsContent>
 
-          <TabsContent value="payment" className="space-y-6">
+          <TabsContent value="investment" className="space-y-6">
             <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-slate-100">Payment Methods</CardTitle>
+                <CardTitle className="text-slate-100">Préférences d'Investissement</CardTitle>
                 <CardDescription className="text-slate-400">
-                  Manage your payment methods for investments and subscriptions
+                  Définissez vos intérêts et préférences d'investissement
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-10 w-10 rounded-md bg-blue-900/30 flex items-center justify-center">
-                      <CreditCard className="h-5 w-5 text-blue-400" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-slate-200">Visa ending in 4242</div>
-                      <div className="text-xs text-slate-400">Expires 12/2025</div>
-                    </div>
+                <div className="space-y-2">
+                  <Label>Secteurs d'Investissement Préférés</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {["technology", "healthcare", "energy", "real_estate", "agriculture", "education"].map(
+                      (category) => (
+                        <Button
+                          key={category}
+                          variant="outline"
+                          className={`justify-start ${
+                            investmentPreferences.preferredCategories.includes(category)
+                              ? "border-cyan-500/30 bg-cyan-900/10 text-cyan-400 hover:bg-cyan-900/20"
+                              : "border-slate-700 hover:bg-slate-800"
+                          }`}
+                          onClick={() => handleCategoryToggle(category)}
+                        >
+                          {category.charAt(0).toUpperCase() + category.slice(1).replace("_", " ")}
+                        </Button>
+                      ),
+                    )}
                   </div>
-                  <Badge variant="outline" className="bg-green-900/20 text-green-400 border-green-500/30">
-                    Default
-                  </Badge>
                 </div>
 
-                <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-10 w-10 rounded-md bg-purple-900/30 flex items-center justify-center">
-                      <CreditCard className="h-5 w-5 text-purple-400" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-slate-200">Mastercard ending in 5678</div>
-                      <div className="text-xs text-slate-400">Expires 08/2024</div>
-                    </div>
+                <div className="space-y-2 mt-4">
+                  <Label>Objectifs d'Investissement</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {["growth", "income", "preservation", "speculation", "retirement", "education"].map((goal) => (
+                      <Button
+                        key={goal}
+                        variant="outline"
+                        className={`justify-start ${
+                          investmentPreferences.investmentGoals.includes(goal)
+                            ? "border-cyan-500/30 bg-cyan-900/10 text-cyan-400 hover:bg-cyan-900/20"
+                            : "border-slate-700 hover:bg-slate-800"
+                        }`}
+                        onClick={() => {
+                          setInvestmentPreferences((prev) => {
+                            const goals = [...prev.investmentGoals]
+                            if (goals.includes(goal)) {
+                              return { ...prev, investmentGoals: goals.filter((g) => g !== goal) }
+                            } else {
+                              return { ...prev, investmentGoals: [...goals, goal] }
+                            }
+                          })
+                        }}
+                      >
+                        {goal.charAt(0).toUpperCase() + goal.slice(1)}
+                      </Button>
+                    ))}
                   </div>
-                  <Button variant="outline" size="sm" className="h-8 border-slate-700 hover:bg-slate-800">
-                    Set as Default
-                  </Button>
-                </div>
-
-                <Button variant="outline" className="w-full border-dashed border-slate-700 hover:bg-slate-800 mt-2">
-                  <Plus className="mr-2 h-4 w-4" /> Add Payment Method
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Billing Information</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Manage your billing details for invoices and receipts
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="billingName">Billing Name</Label>
-                    <Input
-                      id="billingName"
-                      className="bg-slate-800/50 border-slate-700 text-slate-100"
-                      defaultValue="John Doe"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="billingEmail">Billing Email</Label>
-                    <Input
-                      id="billingEmail"
-                      type="email"
-                      className="bg-slate-800/50 border-slate-700 text-slate-100"
-                      defaultValue="john.doe@example.com"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="billingAddress">Billing Address</Label>
-                    <Input
-                      id="billingAddress"
-                      className="bg-slate-800/50 border-slate-700 text-slate-100"
-                      defaultValue="123 Main Street"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="billingCity">City</Label>
-                    <Input
-                      id="billingCity"
-                      className="bg-slate-800/50 border-slate-700 text-slate-100"
-                      defaultValue="Antananarivo"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="billingCountry">Country</Label>
-                    <Select defaultValue="madagascar">
-                      <SelectTrigger className="bg-slate-800/50 border-slate-700">
-                        <SelectValue placeholder="Select country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="madagascar">Madagascar</SelectItem>
-                        <SelectItem value="mauritius">Mauritius</SelectItem>
-                        <SelectItem value="seychelles">Seychelles</SelectItem>
-                        <SelectItem value="comoros">Comoros</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="billingZip">Postal/Zip Code</Label>
-                    <Input
-                      id="billingZip"
-                      className="bg-slate-800/50 border-slate-700 text-slate-100"
-                      defaultValue="101"
-                    />
-                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Sélectionnez vos objectifs d'investissement principaux.</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="taxId">Tax ID/VAT Number (Optional)</Label>
-                  <Input
-                    id="taxId"
-                    className="bg-slate-800/50 border-slate-700 text-slate-100"
-                    placeholder="Enter your tax ID or VAT number"
-                  />
+                  <Label htmlFor="riskTolerance">Tolérance au Risque</Label>
+                  <Select
+                    value={investmentPreferences.riskTolerance}
+                    onValueChange={(value) =>
+                      setInvestmentPreferences((prev) => ({
+                        ...prev,
+                        riskTolerance: value as "low" | "medium" | "high",
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="bg-slate-800/50 border-slate-700">
+                      <SelectValue placeholder="Sélectionnez votre tolérance au risque" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Conservateur</SelectItem>
+                      <SelectItem value="medium">Modéré</SelectItem>
+                      <SelectItem value="high">Agressif</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="minInvestmentAmount">Montant Minimum d'Investissement (MGA)</Label>
+                    <Input
+                      id="minInvestmentAmount"
+                      type="number"
+                      className="bg-slate-800/50 border-slate-700 text-slate-100"
+                      value={investmentPreferences.minInvestmentAmount}
+                      onChange={(e) =>
+                        setInvestmentPreferences((prev) => ({ ...prev, minInvestmentAmount: Number(e.target.value) }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maxInvestmentAmount">Montant Maximum d'Investissement (MGA)</Label>
+                    <Input
+                      id="maxInvestmentAmount"
+                      type="number"
+                      className="bg-slate-800/50 border-slate-700 text-slate-100"
+                      value={investmentPreferences.maxInvestmentAmount}
+                      onChange={(e) =>
+                        setInvestmentPreferences((prev) => ({ ...prev, maxInvestmentAmount: Number(e.target.value) }))
+                      }
+                    />
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end">
-                <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500">
-                  Save Billing Information
+                <Button
+                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500"
+                  onClick={handleSaveInvestmentPreferences}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Enregistrement...
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <Save className="mr-2 h-4 w-4" /> Enregistrer les préférences
+                    </div>
+                  )}
                 </Button>
               </CardFooter>
-            </Card>
-
-            <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Subscription</CardTitle>
-                <CardDescription className="text-slate-400">Manage your subscription plan</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-gradient-to-r from-cyan-900/20 to-blue-900/20 rounded-lg border border-cyan-500/30 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-cyan-400">Basic Plan</div>
-                    <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/50">Current Plan</Badge>
-                  </div>
-                  <div className="text-xs text-slate-400 mb-4">Access to basic features with standard limits</div>
-                  <Button className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500">
-                    Upgrade to Premium
-                  </Button>
-                </div>
-
-                <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-purple-400">Premium Plan</div>
-                    <div className="text-xs text-slate-300 font-mono">250,000 MGA / year</div>
-                  </div>
-                  <div className="text-xs text-slate-400 mb-4">
-                    {userType === "investor"
-                      ? "Early access to top projects and personalized investment advice"
-                      : "Boost your project visibility and get expert guidance"}
-                  </div>
-                  <ul className="space-y-2 mb-4">
-                    <li className="text-xs text-slate-300 flex items-center">
-                      <CheckCircle2 className="h-3 w-3 text-green-500 mr-2" />
-                      {userType === "investor"
-                        ? "Personalized investment recommendations"
-                        : "Priority project listing and promotion"}
-                    </li>
-                    <li className="text-xs text-slate-300 flex items-center">
-                      <CheckCircle2 className="h-3 w-3 text-green-500 mr-2" />
-                      {userType === "investor"
-                        ? "Early access to promising projects"
-                        : "Expert guidance on project presentation"}
-                    </li>
-                    <li className="text-xs text-slate-300 flex items-center">
-                      <CheckCircle2 className="h-3 w-3 text-green-500 mr-2" />
-                      {userType === "investor"
-                        ? "Reduced platform fees on investments"
-                        : "Dedicated support for funding campaigns"}
-                    </li>
-                  </ul>
-                </div>
-              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
@@ -795,4 +641,3 @@ export default function ProfilePage() {
     </DashboardLayout>
   )
 }
-
