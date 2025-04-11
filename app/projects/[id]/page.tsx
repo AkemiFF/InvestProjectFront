@@ -809,25 +809,31 @@ export default function ProjectDetailPage() {
                         id="investmentAmount"
                         type="number"
                         placeholder={project.minimum_investment}
-                        min={project.minimum_investment}
-                        max={project.maximum_investment}
                         className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
                         value={investmentAmount}
                         onChange={(e) => {
-                          const value = Number(e.target.value);
+                          // Permet de taper n'importe quelle valeur temporairement
+                          setInvestmentAmount(e.target.value);
+                        }}
+                        onBlur={() => {
+                          const value = Number(investmentAmount);
                           const min = Number(project.minimum_investment);
                           const max = Number(project.maximum_investment);
 
+                          // Si la valeur n'est pas un nombre valide, on réinitialise au minimum
+                          if (isNaN(value)) {
+                            setInvestmentAmount(min.toString());
+                            return;
+                          }
+
+                          // Ajuste la valeur si elle est en dehors des limites
                           if (value < min) {
                             setInvestmentAmount(min.toString());
                           } else if (value > max) {
                             setInvestmentAmount(max.toString());
-                          } else {
-                            setInvestmentAmount(value.toString());
                           }
                         }}
                       />
-
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">
