@@ -64,8 +64,8 @@ export default function ProfilePage() {
 
         // Initialiser les formulaires avec les données de l'utilisateur
         setPersonalInfo({
-          firstName: userData.firstName || "",
-          lastName: userData.lastName || "",
+          firstName: userData.first_name || "",
+          lastName: userData.last_name || "",
           email: userData.email || "",
           phone: "", // Ce champ n'existe pas dans l'API
           location: userData.location || "",
@@ -127,8 +127,8 @@ export default function ProfilePage() {
 
       // Préparer les données à envoyer à l'API
       const userData: Partial<UserType> = {
-        firstName: personalInfo.firstName,
-        lastName: personalInfo.lastName,
+        first_name: personalInfo.firstName,
+        last_name: personalInfo.lastName,
         bio: personalInfo.bio,
         location: personalInfo.location,
         website: personalInfo.website,
@@ -279,10 +279,10 @@ export default function ProfilePage() {
               <CardContent>
                 <div className="flex flex-col md:flex-row items-center gap-6">
                   <Avatar className="h-24 w-24 border-2 border-slate-700">
-                    <AvatarImage src={user?.avatar || "/placeholder.svg?height=96&width=96"} alt={user?.firstName} />
+                    <AvatarImage src={user?.avatar || "/placeholder.svg?height=96&width=96"} alt={user?.first_name} />
                     <AvatarFallback className="bg-slate-700 text-cyan-500 text-2xl">
-                      {user?.firstName?.charAt(0)}
-                      {user?.lastName?.charAt(0)}
+                      {user?.first_name?.charAt(0)}
+                      {user?.last_name?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
 
