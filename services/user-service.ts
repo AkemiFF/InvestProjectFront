@@ -3,8 +3,8 @@ import { apiClient } from "../lib/api-client"
 export interface User {
   id: string
   email: string
-  firstName: string
-  lastName: string
+  first_name: string
+  last_name: string
   avatar: string | null
   role: "investor" | "project_owner" | "admin"
   isVerified: boolean
@@ -54,7 +54,7 @@ export const userService = {
   },
 
   updatePassword: async (currentPassword: string, newPassword: string): Promise<{ success: boolean }> => {
-    const response = await apiClient.post<{ success: boolean }>("/api/users/me/change-password/", {
+    const response = await apiClient.post<{ success: boolean }>("/api/users/change-password/", {
       currentPassword,
       newPassword,
     })
@@ -62,13 +62,13 @@ export const userService = {
   },
 
   getUserStats: async (): Promise<UserStats> => {
-    const response = await apiClient.get<UserStats>("/api/users/me/stats/")
+    const response = await apiClient.get<UserStats>("/api/users/stats/")
     return response.data
   },
 
   // Utilisons également l'endpoint approprié pour les préférences d'investissement
   updateInvestmentPreferences: async (preferences: User["investmentPreferences"]): Promise<User> => {
-    const response = await apiClient.patch<User>("/api/users/me/investment-preferences/update_profile/", preferences)
+    const response = await apiClient.patch<User>("/api/users/investment-preferences/update_profile/", preferences)
     return response.data
   },
 }
