@@ -3,19 +3,18 @@
 import { StatusItem } from "@/components/dashboard/status-item"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Briefcase, Command, FileText, Heart, MessageSquare, Settings, Shield, Users, Wallet, Zap } from "lucide-react"
+import { Briefcase, Command, FileText, Heart, Logs, MessageSquare, Settings, Shield, Users, Wallet, Zap } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type React from "react"
 import { useEffect, useState } from "react"
-import { useLayoutContext } from "./LayoutContext"
 const adminName = "admin"
 // Configuration des liens
 const routeConfig = {
   common: {
     Dashboard: "/dashboard",
     Projects: "/projects",
-    Finances: "/payments",
+    Finances: "/wallet",
     Settings: "/profile"
   },
   admin: {
@@ -23,7 +22,9 @@ const routeConfig = {
     "User Management": `/${adminName}/users`,
     "Projects Management": `/${adminName}/projects`,
     Moderation: `/${adminName}/moderation`,
-    Support: `/${adminName}/centre-aide`
+    Logs: `/${adminName}/logs`,
+    Support: `/${adminName}/centre-aide`,
+    Settings: `/${adminName}/settings`
   },
   user: {
     Network: "/contacts",
@@ -62,7 +63,6 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ userType: initialUserType }: DashboardSidebarProps) {
   const [userType, setUserTp] = useState("")
-  const { user, setUserType, updateUser } = useLayoutContext();
 
   useEffect(() => {
     setUserTp(initialUserType)
@@ -109,16 +109,16 @@ export function DashboardSidebar({ userType: initialUserType }: DashboardSidebar
               <NavItem icon={Users} label="User Management" href={routeConfig.admin["User Management"]} />
               <NavItem icon={Briefcase} label="Projects" href={routeConfig.admin["Projects Management"]} />
               <NavItem icon={Shield} label="Moderation" href={routeConfig.admin.Moderation} />
-              {/* <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} /> */}
+              <NavItem icon={Logs} label="Logs" href={routeConfig.admin.Logs} />
               <NavItem icon={MessageSquare} label="Support" href={routeConfig.admin.Support} />
-              <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />
+              <NavItem icon={Settings} label="Settings" href={routeConfig.admin.Settings} />
             </>
           ) : (
             <>
               <NavItem icon={Briefcase} label="Projects" href={routeConfig.common.Projects} />
               <NavItem icon={Users} label="Network" href={routeConfig.user.Network} />
               <NavItem icon={MessageSquare} label="Messages" href={routeConfig.user.Messages} />
-              <NavItem icon={Wallet} label="Finances" href={routeConfig.common.Finances} />
+              <NavItem icon={Wallet} label="Wallet" href={routeConfig.common.Finances} />
               <NavItem icon={Heart} label="Favorites" href={routeConfig.user.Favorites} />
               <NavItem icon={FileText} label="Contracts" href={routeConfig.user.Contracts} />
               <NavItem icon={Settings} label="Settings" href={routeConfig.common.Settings} />

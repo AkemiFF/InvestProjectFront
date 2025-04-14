@@ -66,6 +66,8 @@ export interface Project {
   tags?: string[]
   risks?: string
   use_of_funds?: string
+  return_timeline?: string
+  update_project: ProjectUpdate[]
 }
 
 export interface ProjectImage {
@@ -74,6 +76,12 @@ export interface ProjectImage {
   image: string
   order: number
   created_at: string
+}
+export interface ProjectUpdate {
+  id: number
+  date?: string
+  title?: string
+  content?: string
 }
 
 export interface ProjectDocument {

@@ -1,6 +1,5 @@
 "use client"
 
-import { Facebook } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -25,6 +24,7 @@ import {
   DollarSign,
   Download,
   ExternalLink,
+  Facebook,
   FileText,
   Heart,
   HelpCircle,
@@ -39,10 +39,11 @@ import {
   Users,
 } from "lucide-react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function ProjectDetailPage() {
+  const router = useRouter();
   const params = useParams()
   const projectId = params.id
   const [userType, setUserType] = useState<"investor" | "project-owner">("investor")
@@ -52,6 +53,7 @@ export default function ProjectDetailPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorMontant, setErrorMontant] = useState<string | null>(null)
 
   // Fetch project data
   useEffect(() => {
@@ -149,7 +151,7 @@ export default function ProjectDetailPage() {
         completed: false,
       },
     ],
-    updates: [
+    update: [
       {
         date: "2023-11-10",
         title: "Beta Testing Results",
@@ -218,19 +220,11 @@ export default function ProjectDetailPage() {
   }
 
   const handleInvest = () => {
-    setIsLoading(true)
+    if (!investmentAmount || !projectId) return;
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      setShowSuccess(true)
-
-      // Hide success message after 5 seconds
-      setTimeout(() => {
-        setShowSuccess(false)
-      }, 5000)
-    }, 1500)
-  }
+    // Rediriger vers la page de processus de paiement avec les paramètres nécessaires
+    router.push(`/projects/${projectId}/invest?amount=${investmentAmount}`);
+  };
 
   if (isLoadingProject) {
     return (
@@ -314,7 +308,7 @@ export default function ProjectDetailPage() {
                   <div>
                     <CardTitle className="text-2xl text-slate-100">{project.title}</CardTitle>
                     <CardDescription className="text-slate-400 flex items-center mt-1">
-                      <MapPin className="h-4 w-4 mr-1 text-slate-500" /> {projectExtendedData.location}
+                      <MapPin className="h-4 w-4 mr-1 text-slate-500" /> {project.location}
                     </CardDescription>
                   </div>
                   <div className="flex space-x-2">
@@ -394,10 +388,10 @@ export default function ProjectDetailPage() {
                   Team
                 </TabsTrigger>
                 <TabsTrigger
-                  value="updates"
+                  value="update_project"
                   className="data-[state=active]:bg-slate-700 data-[state=active]:text-cyan-400"
                 >
-                  Updates
+                  Update
                 </TabsTrigger>
                 <TabsTrigger
                   value="comments"
@@ -589,7 +583,7 @@ export default function ProjectDetailPage() {
                           <Calendar className="h-5 w-5 text-cyan-500 mr-2" />
                           <h3 className="text-sm font-medium text-slate-200">Return Timeline</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-100">{projectExtendedData.returnTimeline} months</p>
+                        <p className="text-2xl font-bold text-slate-100">{project.return_timeline} months</p>
                         <p className="text-xs text-slate-500 mt-1">Estimated time to realize returns</p>
                       </div>
 
@@ -654,20 +648,20 @@ export default function ProjectDetailPage() {
                       <div className="flex-shrink-0">
                         <Avatar className="h-20 w-20">
                           <AvatarImage
-                            src={project.owner?.profile_picture || projectExtendedData.owner.image}
-                            alt={project.owner?.username || projectExtendedData.owner.name}
+                            src={project.owner?.profile_picture ?? "/placeholder.svg"}
+                            alt={project.owner?.username}
                           />
                           <AvatarFallback className="bg-slate-700 text-cyan-500">
-                            {(project.owner?.username || projectExtendedData.owner.name).charAt(0)}
+                            {(project.owner?.username).charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                       </div>
                       <div className="flex-1">
                         <h3 className="text-lg font-medium text-slate-100 mb-1">
-                          {project.owner?.username || projectExtendedData.owner.name}
+                          {project.owner?.username}
                         </h3>
                         <p className="text-sm text-slate-400 mb-3">
-                          {project.owner?.biography || projectExtendedData.owner.description}
+                          {project.owner?.biography}
                         </p>
                         <div className="flex items-center space-x-4 text-sm">
                           <div className="flex items-center">
@@ -725,14 +719,14 @@ export default function ProjectDetailPage() {
 
               </TabsContent>
 
-              <TabsContent value="updates" className="space-y-6">
+              <TabsContent value="update_project" className="space-y-6">
                 <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-slate-100 text-lg">Project Updates</CardTitle>
+                    <CardTitle className="text-slate-100 text-lg">Project update</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {projectExtendedData.updates.map((update, index) => (
+                      {project.update_project.map((update, index) => (
                         <div key={index} className="bg-slate-800/50 rounded-md p-4 border border-slate-700/50">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-sm font-medium text-slate-200">{update.title}</h4>
@@ -812,29 +806,43 @@ export default function ProjectDetailPage() {
                     </Label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                      <Input
-                        id="investmentAmount"
-                        type="number"
-                        placeholder={project.minimum_investment}
-                        min={project.minimum_investment}
-                        max={project.maximum_investment}
-                        className="pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
-                        value={investmentAmount}
-                        onChange={(e) => {
-                          const value = Number(e.target.value);
-                          const min = Number(project.minimum_investment);
-                          const max = Number(project.maximum_investment);
+                      <div className="space-y-2"> {/* Conteneur avec espacement */}
+                        <Input
+                          id="investmentAmount"
+                          type="number"
+                          placeholder={project.minimum_investment}
+                          className={`pl-10 bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 ${error && "border-red-500"
+                            }`}
+                          value={investmentAmount}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setInvestmentAmount(value);
+                            setErrorMontant(""); // Réinitialise l'erreur à chaque modification
+                          }}
+                          onBlur={() => {
+                            const numericValue = Number(investmentAmount);
+                            const min = Number(project.minimum_investment);
+                            const max = Number(project.maximum_investment);
 
-                          if (value < min) {
-                            setInvestmentAmount(min.toString());
-                          } else if (value > max) {
-                            setInvestmentAmount(max.toString());
-                          } else {
-                            setInvestmentAmount(value.toString());
-                          }
-                        }}
-                      />
+                            if (investmentAmount === "") {
+                              setErrorMontant("Veuillez saisir un montant");
+                            } else if (isNaN(numericValue)) {
+                              setErrorMontant("Montant invalide");
+                            } else if (numericValue < min) {
+                              setErrorMontant(`Le montant minimum est ${formatCurrency(min)}`);
+                            } else if (numericValue > max) {
+                              setErrorMontant(`Le montant maximum est ${formatCurrency(max)}`);
+                            }
+                          }}
+                        />
 
+                        {/* Message d'erreur positionné en dessous */}
+                        {errorMontant && (
+                          <p className="text-sm text-red-500 mt-1"> {/* marge-top de 4px */}
+                            {errorMontant}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">
@@ -883,7 +891,7 @@ export default function ProjectDetailPage() {
                       </div>
                     </div>
                     <div className="text-xs text-slate-500">
-                      Estimated return after {projectExtendedData.returnTimeline} months
+                      Estimated return after {project.return_timeline} months
                     </div>
                   </div>
 
@@ -933,7 +941,7 @@ export default function ProjectDetailPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Minimum Investment</span>
                     <span className="text-sm text-slate-300">
-                      {formatCurrency(Number.parseInt(projectExtendedData.minimumInvestment))}
+                      {formatCurrency(Number.parseInt(project.minimum_investment))}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -942,7 +950,7 @@ export default function ProjectDetailPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Return Timeline</span>
-                    <span className="text-sm text-slate-300">{projectExtendedData.returnTimeline} months</span>
+                    <span className="text-sm text-slate-300">{project.return_timeline} months</span>
                   </div>
                 </div>
               </CardContent>
