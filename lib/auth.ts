@@ -69,7 +69,7 @@ const authManager = (type: AuthType = "user") => {
             if (!refreshToken) {
                 throw new Error("Aucun token de rafraîchissement disponible");
             }
-            const response = await fetch(`${BASE_URL}/auth/token/refresh/`, {
+            const response = await fetch(`${BASE_URL}/api/auth/token/refresh/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ refresh: refreshToken }),
