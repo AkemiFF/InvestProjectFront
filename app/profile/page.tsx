@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -53,6 +53,12 @@ export default function ProfilePage() {
     minInvestmentAmount: 5000000,
     maxInvestmentAmount: 20000000,
   })
+
+  // Ajoutez ces états et références
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
 
   // Charger les données de l'utilisateur au chargement du composant
   useEffect(() => {
@@ -118,6 +124,61 @@ export default function ProfilePage() {
         return { ...prev, preferredCategories: [...categories, category] }
       }
     })
+  }
+
+  // Ajoutez ces fonctions pour gérer le téléchargement d'image
+  const handleImageClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setSelectedImage(file)
+
+      // Créer un aperçu de l'image
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        setImagePreview(event.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Ajouter cette fonction dans le composant ProfilePage
+  const reloadUserData = async () => {
+    try {
+      const userData = await userService.getCurrentUser()
+      setUser(userData)
+      console.log("Données utilisateur rechargées:", userData)
+    } catch (err) {
+      console.error("Erreur lors du rechargement des données utilisateur:", err)
+    }
+  }
+
+  // Modifier la fonction handleUploadImage pour utiliser reloadUserData
+  const handleUploadImage = async () => {
+    if (!selectedImage) return
+
+    try {
+      setIsUploadingImage(true)
+      await userService.uploadProfileImage(selectedImage)
+
+      // Recharger les données utilisateur pour obtenir l'URL mise à jour de l'image
+      await reloadUserData()
+
+      setSuccessMessage("Photo de profil mise à jour avec succès")
+      setTimeout(() => setSuccessMessage(""), 3000)
+
+      // Réinitialiser les états
+      setSelectedImage(null)
+      setImagePreview(null)
+    } catch (err) {
+      setError("Erreur lors du téléchargement de l'image")
+      console.error("Erreur lors du téléchargement de l'image:", err)
+    } finally {
+      setIsUploadingImage(false)
+    }
   }
 
   // Enregistrer les modifications du profil
@@ -279,7 +340,23 @@ export default function ProfilePage() {
               <CardContent>
                 <div className="flex flex-col md:flex-row items-center gap-6">
                   <Avatar className="h-24 w-24 border-2 border-slate-700">
-                    <AvatarImage src={user?.avatar || "/placeholder.svg?height=96&width=96"} alt={user?.first_name} />
+                    {imagePreview ? (
+                      // Si nous avons un aperçu d'image (après sélection mais avant téléchargement)
+                      <AvatarImage src={imagePreview || "/placeholder.svg"} alt={user?.first_name} />
+                    ) : user?.profile_picture ? (
+                      // Si l'utilisateur a une image de profil
+                      <AvatarImage
+                        src={`${user.profile_picture}?t=${new Date().getTime()}`}
+                        alt={user?.first_name}
+                        onError={(e) => {
+                          console.error("Erreur de chargement de l'image:", e)
+                          ;(e.target as HTMLImageElement).src = "/placeholder.svg?height=96&width=96"
+                        }}
+                      />
+                    ) : (
+                      // Image par défaut
+                      <AvatarImage src="/placeholder.svg?height=96&width=96" alt={user?.first_name} />
+                    )}
                     <AvatarFallback className="bg-slate-700 text-cyan-500 text-2xl">
                       {user?.first_name?.charAt(0)}
                       {user?.last_name?.charAt(0)}
@@ -287,10 +364,39 @@ export default function ProfilePage() {
                   </Avatar>
 
                   <div className="flex flex-col gap-4 w-full">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
                     <div className="flex flex-col sm:flex-row gap-2">
-                      <Button variant="outline" className="border-slate-700 hover:bg-slate-800">
+                      <Button
+                        variant="outline"
+                        className="border-slate-700 hover:bg-slate-800"
+                        onClick={handleImageClick}
+                      >
                         <Upload className="mr-2 h-4 w-4" /> Télécharger une image
                       </Button>
+                      {selectedImage && (
+                        <Button
+                          className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500"
+                          onClick={handleUploadImage}
+                          disabled={isUploadingImage}
+                        >
+                          {isUploadingImage ? (
+                            <div className="flex items-center">
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Téléchargement...
+                            </div>
+                          ) : (
+                            <div className="flex items-center">
+                              <Save className="mr-2 h-4 w-4" /> Enregistrer l'image
+                            </div>
+                          )}
+                        </Button>
+                      )}
                     </div>
                     <p className="text-xs text-slate-500">Formats autorisés: JPG, PNG, GIF. Taille maximale: 2MB.</p>
                   </div>
